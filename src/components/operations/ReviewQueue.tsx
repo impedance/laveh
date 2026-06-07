@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../../store';
 import EditCategoryModal from './EditCategoryModal';
 import type { Transaction } from '../../store/types';
+import { formatDateShort } from '../../shared/formatDate';
 
 export default function ReviewQueue() {
   const transactions = useStore((s) => s.transactions);
@@ -31,7 +32,7 @@ export default function ReviewQueue() {
           <div className="mb-2 flex items-start justify-between">
             <div>
               <div className="text-sm font-medium text-[#eef4f8]">{current.description}</div>
-              <div className="mt-0.5 text-xs text-[#8795a5]">{current.date}</div>
+              <div className="mt-0.5 text-xs text-[#8795a5]">{formatDateShort(current.date)}</div>
             </div>
             <span className={`text-sm font-bold ${current.amount >= 0 ? 'text-[#58d68d]' : 'text-[#e74c3c]'}`}>
               {current.amount.toLocaleString('ru-RU')} ₽

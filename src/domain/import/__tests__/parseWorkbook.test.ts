@@ -75,3 +75,45 @@ describe('mapToTBankRaw + normalizeTBankRow', () => {
     expect(typed.bonuses).toBe(0);
   });
 });
+
+describe('normalizeDateField (Excel serial → ISO)', () => {
+  it('converts Excel serial number to ISO date string', () => {
+    const rawRow = {
+      operationDate: '46171', paymentDate: '46171', cardNumber: '',
+      status: 'OK', operationAmount: '0', operationCurrency: 'RUB',
+      paymentAmount: '0', paymentCurrency: 'RUB', cashback: '',
+      bankCategory: '', mcc: '', description: 'между своими счетами',
+      bonuses: '', rounding: '', amountWithRounding: '',
+    };
+    const typed = normalizeTBankRow(rawRow);
+    expect(typed.operationDate).toMatch(/^202\d-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+    expect(typed.paymentDate).toMatch(/^202\d-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+  });
+
+  it('passes through already-formatted ISO date strings', () => {
+    const rawRow = {
+      operationDate: '2026-06-04 19:42:58', paymentDate: '2026-06-04',
+      cardNumber: '*5343', status: 'OK', operationAmount: '-1500',
+      operationCurrency: 'RUB', paymentAmount: '-1500', paymentCurrency: 'RUB',
+      cashback: '15', bankCategory: 'Супермаркеты', mcc: '5411',
+      description: 'Пятёрочка', bonuses: '15', rounding: '0',
+      amountWithRounding: '-1500',
+    };
+    const typed = normalizeTBankRow(rawRow);
+    expect(typed.operationDate).toBe('2026-06-04 19:42:58');
+    expect(typed.paymentDate).toBe('2026-06-04');
+  });
+
+  it('passes through non-numeric date strings unchanged', () => {
+    const rawRow = {
+      operationDate: '', paymentDate: 'в разработке', cardNumber: '',
+      status: 'OK', operationAmount: '0', operationCurrency: 'RUB',
+      paymentAmount: '0', paymentCurrency: 'RUB', cashback: '',
+      bankCategory: '', mcc: '', description: '',
+      bonuses: '', rounding: '', amountWithRounding: '',
+    };
+    const typed = normalizeTBankRow(rawRow);
+    expect(typed.operationDate).toBe('');
+    expect(typed.paymentDate).toBe('в разработке');
+  });
+});

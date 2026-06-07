@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DenezhkaStore, Transaction, Category, Obligation, Goal, Account, Allocation, CategorizationRule, ImportBatch } from './types';
+import type { DenezhkaStore, Transaction, Category, Obligation, Goal, Account, Allocation, CategorizationRule, ImportBatch, BankMapping } from './types';
 import { seedData } from './seed';
+import { normalizeDateField } from '../domain/import/excelDate';
+import { applyRules } from '../domain/categorization/applyRules';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -39,9 +41,24 @@ export const useStore = create<DenezhkaStore>()(
         set({ todayFlexibleSpent: amount }),
 
       // AICODE-NOTE: IMPORT_BATCH generates batchId, assigns importBatchId to each txn, appends batch record
+      // Auto‑categorises: bankMappings (hitCount ≥ 2) → rules (description)
       commitImport: (transactions: Omit<Transaction, 'id'>[], batch: Omit<ImportBatch, 'id'>) => {
         const id = generateId();
-        const txns = transactions.map((t) => ({ ...t, id: generateId(), importBatchId: id }));
+        const mappings = get().bankMappings;
+        const rules = get().rules;
+        const txns = transactions.map((t) => {
+          const mapping = t.bankCategory
+            ? mappings.find((m) => m.bankCategory === t.bankCategory && m.hitCount >= 2)
+            : undefined;
+          if (mapping) {
+            return { ...t, id: generateId(), importBatchId: id, categoryId: mapping.categoryId, isReviewed: true as const };
+          }
+          const byRule = applyRules([t], rules)[0];
+          if (byRule.categoryId && byRule.isReviewed) {
+            return { ...byRule, id: generateId(), importBatchId: id };
+          }
+          return { ...t, id: generateId(), importBatchId: id };
+        });
         const fullBatch: ImportBatch = { ...batch, id };
         set({
           transactions: [...get().transactions, ...txns],
@@ -62,6 +79,35 @@ export const useStore = create<DenezhkaStore>()(
             t.id === id ? { ...t, categoryId, isReviewed: true } : t,
           ),
         });
+      },
+
+      learnBankMapping: (bankCategory: string, categoryId: string) => {
+        const existing = get().bankMappings.find((m) => m.bankCategory === bankCategory);
+        if (existing) {
+          if (existing.categoryId === categoryId) {
+            set({
+              bankMappings: get().bankMappings.map((m) =>
+                m.id === existing.id ? { ...m, hitCount: m.hitCount + 1 } : m,
+              ),
+            });
+          } else {
+            set({
+              bankMappings: get().bankMappings.map((m) =>
+                m.id === existing.id
+                  ? { ...m, categoryId, hitCount: 1 }
+                  : m,
+              ),
+            });
+          }
+        } else {
+          const newMapping: BankMapping = {
+            id: generateId(),
+            bankCategory,
+            categoryId,
+            hitCount: 1,
+          };
+          set({ bankMappings: [...get().bankMappings, newMapping] });
+        }
       },
 
       addRule: (rule: Omit<CategorizationRule, 'id'>) => {
@@ -175,6 +221,7 @@ export const useStore = create<DenezhkaStore>()(
           goals: parsed.goals ?? [],
           importBatches: parsed.importBatches ?? [],
           rules: parsed.rules ?? [],
+          bankMappings: parsed.bankMappings ?? [],
           nextIncomeDate: parsed.nextIncomeDate ?? get().nextIncomeDate,
           expectedMonthlyIncome: parsed.expectedMonthlyIncome ?? get().expectedMonthlyIncome,
           todayFlexibleSpent: parsed.todayFlexibleSpent ?? 0,
@@ -183,6 +230,53 @@ export const useStore = create<DenezhkaStore>()(
     }),
     {
       name: 'denezhka-store',
+      version: 2,
+      migrate: (state: unknown, version: number) => {
+        const s = state as Record<string, unknown>;
+        if (version < 1 && Array.isArray(s.transactions)) {
+          s.transactions = (s.transactions as Array<Record<string, unknown>>).map(
+            (txn) => ({
+              ...txn,
+              date: normalizeDateField(String(txn.date ?? '')).slice(0, 10),
+              operationDate: txn.operationDate != null
+                ? normalizeDateField(String(txn.operationDate))
+                : undefined,
+              paymentDate: txn.paymentDate != null
+                ? normalizeDateField(String(txn.paymentDate))
+                : undefined,
+            }),
+          );
+        }
+        if (version < 2) {
+          if (!Array.isArray(s.transactions)) {
+            s.bankMappings = [];
+            return s as unknown as typeof seedData;
+          }
+          const catCount = new Map<string, Map<string, number>>();
+          for (const txn of (s.transactions as Array<Record<string, unknown>>)) {
+            const bc = String(txn.bankCategory ?? '');
+            const cid = String(txn.categoryId ?? '');
+            if (!bc || !cid) continue;
+            if (!catCount.has(bc)) catCount.set(bc, new Map());
+            const inner = catCount.get(bc)!;
+            inner.set(cid, (inner.get(cid) ?? 0) + 1);
+          }
+          const mappings: Array<Record<string, unknown>> = [];
+          let idx = 0;
+          for (const [bc, inner] of catCount) {
+            let bestCid = '';
+            let bestN = 0;
+            for (const [cid, n] of inner) {
+              if (n > bestN) { bestN = n; bestCid = cid; }
+            }
+            if (bestCid) {
+              mappings.push({ id: `migrated-${idx++}`, bankCategory: bc, categoryId: bestCid, hitCount: bestN });
+            }
+          }
+          s.bankMappings = mappings;
+        }
+        return s as unknown as typeof seedData;
+      },
       partialize: (state) => ({
         accounts: state.accounts,
         transactions: state.transactions,
@@ -192,6 +286,7 @@ export const useStore = create<DenezhkaStore>()(
         goals: state.goals,
         importBatches: state.importBatches,
         rules: state.rules,
+        bankMappings: state.bankMappings,
         nextIncomeDate: state.nextIncomeDate,
         expectedMonthlyIncome: state.expectedMonthlyIncome,
         todayFlexibleSpent: state.todayFlexibleSpent,

@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../store';
 import { applyRules } from '../domain/categorization/applyRules';
+import { applyBankMappings } from '../domain/categorization/applyBankMappings';
 import EditCategoryModal from '../components/operations/EditCategoryModal';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
 import type { Transaction } from '../store/types';
+import { formatDateShort } from '../shared/formatDate';
 
 interface Props {
   onTabChange: (tab: string) => void;
@@ -14,7 +16,6 @@ interface Props {
 export default function OperationsPage({ onTabChange }: Props) {
   const transactions = useStore((s) => s.transactions);
   const categories = useStore((s) => s.categories);
-  const rules = useStore((s) => s.rules);
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -33,11 +34,15 @@ export default function OperationsPage({ onTabChange }: Props) {
   }, [transactions, dateFrom, dateTo, categoryFilter, onlyUnreviewed]);
 
   const handleReapplyRules = () => {
+    const store = useStore.getState();
     const uncategorized = transactions.filter((t) => !t.isReviewed);
-    const recategorized = applyRules(uncategorized, rules);
-    for (const txn of recategorized) {
-      if (txn.categoryId && txn.isReviewed) {
-        useStore.getState().updateTransactionCategory(txn.id, txn.categoryId);
+    const banked = applyBankMappings(uncategorized, store.bankMappings);
+    const remaining = banked.filter((t) => !t.isReviewed);
+    const ruled = applyRules(remaining, store.rules);
+    const all = [...banked.filter((t) => t.isReviewed), ...ruled];
+    for (const txn of all) {
+      if (txn.categoryId && txn.isReviewed && txn.id) {
+        store.updateTransactionCategory(txn.id, txn.categoryId);
       }
     }
   };
@@ -107,13 +112,12 @@ export default function OperationsPage({ onTabChange }: Props) {
                     {txn.description}
                   </div>
                   <div className="mt-0.5 flex items-center gap-2">
-                    <span className="text-xs text-[#8795a5]">{txn.date}</span>
-                    {cat && (
+                    <span className="text-xs text-[#8795a5]">{formatDateShort(txn.date)}</span>
+                    {cat ? (
                       <span className="rounded-full bg-[#171f2a] px-2 py-0.5 text-xs text-[#75b8ff]">
                         {cat.name}
                       </span>
-                    )}
-                    {!txn.isReviewed && (
+                    ) : (
                       <span className="rounded-full bg-[rgba(245,166,35,0.12)] px-2 py-0.5 text-xs text-[#f5a623]">
                         ?
                       </span>

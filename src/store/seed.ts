@@ -24,6 +24,7 @@ export const seedData: StoreState = {
     { id: 'goal-1', title: 'Закрыть кредитку', type: 'debt_payoff', targetAmount: 700000, currentAmount: 400000, isPrimary: true },
   ],
   importBatches: [],
+  bankMappings: [],
   rules: [
     { id: 'rule-1', pattern: 'Пятёрочка', categoryId: 'cat-1', priority: 10, matchType: 'contains', matchField: 'description' },
     { id: 'rule-2', pattern: 'Перекрёсток', categoryId: 'cat-1', priority: 10, matchType: 'contains', matchField: 'description' },

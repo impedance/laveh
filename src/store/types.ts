@@ -45,6 +45,7 @@ export interface Category {
   name: string;
   plan: number;
   type: 'living' | 'savings' | 'obligation';
+  group?: string;
 }
 
 export interface Obligation {
@@ -90,6 +91,13 @@ export interface CategorizationRule {
   active?: boolean;
 }
 
+export interface BankMapping {
+  id: string;
+  bankCategory: string;
+  categoryId: string;
+  hitCount: number;
+}
+
 export interface StoreState {
   accounts: Account[];
   transactions: Transaction[];
@@ -99,6 +107,7 @@ export interface StoreState {
   goals: Goal[];
   importBatches: ImportBatch[];
   rules: CategorizationRule[];
+  bankMappings: BankMapping[];
   nextIncomeDate: string;
   expectedMonthlyIncome: number;
   todayFlexibleSpent: number;
@@ -129,6 +138,7 @@ export interface StoreActions {
   deleteAccount: (id: string) => void;
   addAllocation: (allocation: Omit<Allocation, 'id'>) => void;
   deleteAllocation: (id: string) => void;
+  learnBankMapping: (bankCategory: string, categoryId: string) => void;
 }
 
 export type DenezhkaStore = StoreState & StoreActions;
