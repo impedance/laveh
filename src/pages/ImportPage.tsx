@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useStore } from '../store';
-import { parseWorkbook } from '../domain/import/parseWorkbook';
+import { parseWorkbook, mapToTBankRaw } from '../domain/import/parseWorkbook';
 import { mapRowsToTransactions } from '../domain/import/mapRowsToTransactions';
 import { deduplicateTransactions } from '../domain/import/deduplicateTransactions';
 import { applyRules } from '../domain/categorization/applyRules';
@@ -8,8 +8,10 @@ import ImportPreview from '../components/import/ImportPreview';
 import ImportHistory from '../components/import/ImportHistory';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
-import type { ParsedRow } from '../domain/import/types';
+import type { ParsedRow, ImportConfig, TBankParsedRow } from '../domain/import/types';
 import type { Transaction } from '../store/types';
+import { T_BANK_DEFAULT_MAPPING } from '../domain/import/types';
+import { normalizeTBankRow } from '../domain/import/normalizeTBankRow';
 
 type Step = 'idle' | 'parsing' | 'preview' | 'importing' | 'done' | 'error';
 
@@ -17,7 +19,12 @@ interface Props {
   onTabChange: (tab: string) => void;
 }
 
-// AICODE-NOTE: IMPORT_FLOW Pipe: file -> parseWorkbook -> mapRows -> dedup -> applyRules -> commitImport
+const DEFAULT_IMPORT_CONFIG: Omit<ImportConfig, 'sourceProfile'> = {
+  defaultAccountId: 'cash-1',
+  cardMappings: [],
+};
+
+// AICODE-NOTE: IMPORT_FLOW Pipe: file -> parseWorkbook -> mapToTBankRaw -> normalize -> mapRows -> dedup -> applyRules -> commitImport
 export default function ImportPage({ onTabChange }: Props) {
   const store = useStore();
   const [step, setStep] = useState<Step>('idle');
@@ -34,17 +41,37 @@ export default function ImportPage({ onTabChange }: Props) {
     setStep('parsing');
     setFilename(file.name);
     try {
+      // 1. raw parse
       const parsed: ParsedRow[] = await parseWorkbook(file);
       if (parsed.length === 0) {
         setStep('error');
         setErrorMessage('Файл не содержит данных');
         return;
       }
-      setFound(parsed.length);
+
+      // 2. map columns → typed raw rows
+      const rawRows = mapToTBankRaw(parsed, T_BANK_DEFAULT_MAPPING);
+
+      // 3. normalize strings → typed values
+      const typedRows: TBankParsedRow[] = rawRows.map(normalizeTBankRow);
+
+      setFound(typedRows.length);
+
+      // 4. map to transactions
       const defaultAccountId = store.accounts[0]?.id || 'cash-1';
-      const mapped = await mapRowsToTransactions(parsed, defaultAccountId, 'tbank');
+      const config: ImportConfig = {
+        ...DEFAULT_IMPORT_CONFIG,
+        defaultAccountId,
+        sourceProfile: 'tbank',
+      };
+      const mapped = await mapRowsToTransactions(typedRows, config);
+
+      // 5. dedup
       const { new: newTxns, duplicates: dupTxns } = deduplicateTransactions(mapped, store.transactions);
+
+      // 6. auto-categorize
       const categorized = applyRules(newTxns, store.rules);
+
       setNewCount(categorized.length);
       setDuplicates(dupTxns.length);
       setPendingTxns(categorized);
@@ -55,9 +82,36 @@ export default function ImportPage({ onTabChange }: Props) {
     }
   }, [store.accounts, store.transactions, store.rules]);
 
+  const downloadBackup = useCallback(() => {
+    const state = useStore.getState();
+    const partial = {
+      accounts: state.accounts,
+      transactions: state.transactions,
+      categories: state.categories,
+      obligations: state.obligations,
+      allocations: state.allocations,
+      goals: state.goals,
+      importBatches: state.importBatches,
+      rules: state.rules,
+      nextIncomeDate: state.nextIncomeDate,
+      expectedMonthlyIncome: state.expectedMonthlyIncome,
+      todayFlexibleSpent: state.todayFlexibleSpent,
+    };
+    const blob = new Blob([JSON.stringify(partial, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, []);
+
   const handleImport = useCallback(() => {
     if (pendingTxns.length === 0) return;
     setStep('importing');
+    downloadBackup();
     store.commitImport(pendingTxns, {
       date: new Date().toISOString().slice(0, 10),
       filename,

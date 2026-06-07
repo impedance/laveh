@@ -1,41 +1,69 @@
 import type { Transaction } from '../../store/types';
-import type { ParsedRow, ColumnMapping } from './types';
+import type { TBankParsedRow, ImportConfig } from './types';
 import { generateHash } from './generateHash';
 
-const DEFAULT_MAPPING: ColumnMapping = {
-  dateIndex: 0,
-  amountIndex: 1,
-  descriptionIndex: 2,
-};
-
-function parseAmount(val: string): number {
-  const cleaned = val.replace(/[^\d,.-]/g, '').replace(',', '.');
-  return parseFloat(cleaned) || 0;
-}
-
+/**
+ * Map typed T‑Bank rows into canonical Transaction objects,
+ * preserving all bank fields.
+ *
+ * Contract:
+ *  - Every input row produces exactly one output transaction (no filtering).
+ *  - `id` is left empty — assigned by store on commit.
+ *  - `externalHash` is deterministic: date + amount + description + cardNumber + accountId + sourceProfile.
+ *  - Empty cardNumber → falls back to defaultAccountId.
+ *  - Mapped card suffix → accountId via config.cardMappings.
+ *
+ * Edge cases handled:
+ *  - operationAmount sign preserved as-is (bank uses "-" for expense).
+ *  - MCC may be null → stored as undefined.
+ *  - paymentDate may be null → stored as undefined.
+ *  - cardNumber empty string → stored as undefined.
+ *  - cashback/bonuses/rounding default to 0.
+ */
 export async function mapRowsToTransactions(
-  rows: ParsedRow[],
-  accountId: string,
-  sourceProfile: string,
-  mapping: ColumnMapping = DEFAULT_MAPPING,
-): Promise<Transaction[]> {
-  const results: Transaction[] = [];
+  rows: TBankParsedRow[],
+  config: ImportConfig,
+): Promise<Omit<Transaction, 'id'>[]> {
+  const results: Omit<Transaction, 'id'>[] = [];
+
   for (const row of rows) {
-    const date = row.values[mapping.dateIndex]?.trim() || '';
-    const amount = parseAmount(row.values[mapping.amountIndex] || '0');
-    const description = row.values[mapping.descriptionIndex]?.trim() || '';
-    if (!date || !description) continue;
-    const hash = await generateHash(date, amount, description, accountId, sourceProfile);
-    results.push({
-      id: '',
-      date,
-      description,
-      amount,
+    const accountId = resolveAccountId(row.cardNumber, config);
+    const hash = await generateHash(
+      row.operationDate,
+      row.operationAmount,
+      row.description,
+      row.cardNumber,
       accountId,
-      sourceProfile,
+      config.sourceProfile,
+    );
+
+    results.push({
+      date: row.paymentDate ?? row.operationDate.slice(0, 10),
+      description: row.description,
+      amount: row.operationAmount,
+      accountId,
+      sourceProfile: config.sourceProfile,
       externalHash: hash,
       isReviewed: false,
+
+      operationDate: row.operationDate,
+      paymentDate: row.paymentDate ?? undefined,
+      cardNumber: row.cardNumber || undefined,
+      bankCategory: row.bankCategory || undefined,
+      mcc: row.mcc ?? undefined,
+      cashback: row.cashback || undefined,
+      bonuses: row.bonuses || undefined,
+      bankStatus: row.status,
+      operationCurrency: row.operationCurrency || undefined,
+      operationAmount: row.operationAmount || undefined,
     });
   }
+
   return results;
+}
+
+function resolveAccountId(cardNumber: string, config: ImportConfig): string {
+  if (!cardNumber) return config.defaultAccountId;
+  const mapping = config.cardMappings.find((m) => m.suffix === cardNumber);
+  return mapping?.accountId ?? config.defaultAccountId;
 }

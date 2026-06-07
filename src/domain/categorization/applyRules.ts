@@ -1,9 +1,9 @@
 import type { Transaction, CategorizationRule } from '../../store/types';
 
-export function applyRules(
-  transactions: Transaction[],
+export function applyRules<T extends Partial<Transaction>>(
+  transactions: T[],
   rules: CategorizationRule[],
-): Transaction[] {
+): T[] {
   const sorted = [...rules].sort((a, b) => b.priority - a.priority);
   return transactions.map((txn) => {
     if (txn.isReviewed) return txn;

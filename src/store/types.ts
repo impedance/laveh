@@ -17,6 +17,27 @@ export interface Transaction {
   externalHash?: string;
   isReviewed?: boolean;
   sourceProfile?: string;
+
+  /** T‑Bank: original operation datetime (e.g. "2026-05-31 19:42:58") */
+  operationDate?: string;
+  /** T‑Bank: payment/settlement date (may differ from operationDate) */
+  paymentDate?: string;
+  /** T‑Bank: masked card number (e.g. "*5343") */
+  cardNumber?: string;
+  /** T‑Bank: bank‑assigned category (e.g. "Супермаркеты") */
+  bankCategory?: string;
+  /** T‑Bank: merchant category code (e.g. "5411") */
+  mcc?: string;
+  /** T‑Bank: cashback accrued */
+  cashback?: number;
+  /** T‑Bank: bonuses including cashback */
+  bonuses?: number;
+  /** T‑Bank: status (OK, HOLD, DECLINED, …) */
+  bankStatus?: string;
+  /** T‑Bank: original operation currency */
+  operationCurrency?: string;
+  /** T‑Bank: original operation amount (before rounding) */
+  operationAmount?: number;
 }
 
 export interface Category {

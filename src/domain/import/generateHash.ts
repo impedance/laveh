@@ -1,11 +1,20 @@
+/**
+ * Deterministic hash for transaction deduplication.
+ *
+ * Inputs: date | amount | description | cardNumber | accountId | sourceProfile
+ *
+ * Adding cardNumber ensures transactions on different cards
+ * (with identical amount/description/date) produce distinct hashes.
+ */
 export async function generateHash(
   date: string,
   amount: number,
   description: string,
-  account: string,
+  cardNumber: string,
+  accountId: string,
   sourceProfile: string,
 ): Promise<string> {
-  const input = `${date}|${amount}|${description}|${account}|${sourceProfile}`;
+  const input = `${date}|${amount}|${description}|${cardNumber}|${accountId}|${sourceProfile}`;
   try {
     const encoder = new TextEncoder();
     const data = encoder.encode(input);

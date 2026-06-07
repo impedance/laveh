@@ -16,9 +16,22 @@ function txn(overrides: Partial<Transaction> = {}): Transaction {
   };
 }
 
+function newTxn(overrides: Partial<Omit<Transaction, 'id'>> = {}): Omit<Transaction, 'id'> {
+  return {
+    date: '2026-06-01',
+    description: 'Test',
+    amount: -100,
+    accountId: 'cash-1',
+    importBatchId: '',
+    externalHash: undefined,
+    isReviewed: false,
+    ...overrides,
+  };
+}
+
 describe('deduplicateTransactions', () => {
   it('returns all as new when no existing transactions', () => {
-    const newTxns = [txn({ externalHash: 'hash1' }), txn({ externalHash: 'hash2' })];
+    const newTxns = [newTxn({ externalHash: 'hash1' }), newTxn({ externalHash: 'hash2' })];
     const result = deduplicateTransactions(newTxns, []);
     expect(result.new).toHaveLength(2);
     expect(result.duplicates).toHaveLength(0);
@@ -26,7 +39,7 @@ describe('deduplicateTransactions', () => {
 
   it('detects duplicates by externalHash', () => {
     const existing = [txn({ externalHash: 'hash1' })];
-    const newTxns = [txn({ externalHash: 'hash1' }), txn({ externalHash: 'hash2' })];
+    const newTxns = [newTxn({ externalHash: 'hash1' }), newTxn({ externalHash: 'hash2' })];
     const result = deduplicateTransactions(newTxns, existing);
     expect(result.new).toHaveLength(1);
     expect(result.duplicates).toHaveLength(1);
@@ -35,7 +48,7 @@ describe('deduplicateTransactions', () => {
 
   it('handles all duplicates', () => {
     const existing = [txn({ externalHash: 'hash1' }), txn({ externalHash: 'hash2' })];
-    const newTxns = [txn({ externalHash: 'hash1' }), txn({ externalHash: 'hash2' })];
+    const newTxns = [newTxn({ externalHash: 'hash1' }), newTxn({ externalHash: 'hash2' })];
     const result = deduplicateTransactions(newTxns, existing);
     expect(result.new).toHaveLength(0);
     expect(result.duplicates).toHaveLength(2);
@@ -43,7 +56,16 @@ describe('deduplicateTransactions', () => {
 
   it('handles transactions without hash', () => {
     const existing = [txn({ externalHash: 'hash1' })];
-    const newTxns = [txn({ externalHash: undefined })];
+    const newTxns = [newTxn({ externalHash: undefined })];
+    const result = deduplicateTransactions(newTxns, existing);
+    expect(result.new).toHaveLength(1);
+    expect(result.duplicates).toHaveLength(0);
+  });
+
+  it('dedup by hash includes cardNumber in hash identity', () => {
+    // Same date/amount/description but different card → different hash → not a dup
+    const existing = [txn({ externalHash: 'hash-for-card-1' })];
+    const newTxns = [newTxn({ externalHash: 'hash-for-card-2' })];
     const result = deduplicateTransactions(newTxns, existing);
     expect(result.new).toHaveLength(1);
     expect(result.duplicates).toHaveLength(0);
