@@ -18,6 +18,17 @@ Use this file as the repo map for agents. Keep it short and specific.
 - **Boundaries / DTOs / config:** `src/store/types.ts`, `src/domain/dashboard/types.ts`
 - **Adapters (I/O):** `src/domain/import/parseWorkbook.ts`, `src/domain/import/deduplicateTransactions.ts`
 
+## Implementation Plans
+- **Master spec (reference):** `tasks/01-product-and-stack.md` through `tasks/05-visual-phases-delivery.md` — product requirements, not execution plans.
+- **Execution plans (follow these):** `docs/tasks/` — one file per phase, each with Outcome, Scope, Steps, Validation, DOD, Rollback.
+  - `docs/tasks/00-scaffold.md` — Phase 0: Vite + React + TS + Tailwind scaffolding
+  - `docs/tasks/01-static-ui.md` — Phase 1: HTML mock → React components
+  - `docs/tasks/02-store-and-backup.md` — Phase 2: Zustand store + persist + JSON backup
+  - `docs/tasks/03-dashboard-calc.md` — Phase 3: calculateDashboard + unit tests
+  - `docs/tasks/04-excel-import.md` — Phase 4: SheetJS import + dedup
+  - `docs/tasks/05-categories-review.md` — Phase 5: categorization rules, Operations, Plan screens
+  - `docs/tasks/06-pwa.md` — Phase 6: PWA manifest + service worker
+
 ## Task Router
 - **UI / routes / controllers:** `src/pages/`, `src/components/` -> focused tests: `npx vitest run --reporter=verbose` (planned)
 - **Core domain behavior:** `src/domain/dashboard/`, `src/domain/categorization/` -> focused tests: `npx vitest run src/domain/`
@@ -53,4 +64,4 @@ Use this file as the repo map for agents. Keep it short and specific.
 ## Known Pitfalls
 - **localStorage loss:** Safari can purge localStorage. Always export JSON backup before clearing browser data. Backup is Phase 2, not later.
 - **Credit card balance:** credit account balance must NOT be included in Current Cash Balance. The formula subtracts obligations, not adds credit limit.
-- **Zero-code state:** the project is in planning. `make smoke` and `make preflight` will report missing tooling until Vite/TypeScript/Vitest scaffolding is added in Phase 1.
+- **Zero-code state:** the project is in planning. `make smoke` and `make preflight` will no-op until Vite/TypeScript/Vitest scaffolding is added in Phase 0 (`docs/tasks/00-scaffold.md`).
