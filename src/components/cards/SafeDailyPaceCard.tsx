@@ -1,7 +1,7 @@
-import type { MockDashboardData } from '../../mock/dashboardData';
+import type { SafeDailyPaceView } from '../../domain/dashboard/types';
 
 interface Props {
-  data: MockDashboardData['safeDailyPace'];
+  data: SafeDailyPaceView;
 }
 
 export default function SafeDailyPaceCard({ data }: Props) {

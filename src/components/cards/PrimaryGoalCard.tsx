@@ -1,7 +1,7 @@
-import type { MockDashboardData } from '../../mock/dashboardData';
+import type { PrimaryGoalView } from '../../domain/dashboard/types';
 
 interface Props {
-  data: MockDashboardData['primaryGoal'];
+  data: PrimaryGoalView;
 }
 
 const fmt = (n: number) => {

@@ -1,7 +1,7 @@
-import type { MockDashboardData } from '../../mock/dashboardData';
+import type { RecurringExpensesView } from '../../domain/dashboard/types';
 
 interface Props {
-  data: MockDashboardData['recurringExpenses'];
+  data: RecurringExpensesView;
 }
 
 export default function RecurringExpensesCard({ data }: Props) {

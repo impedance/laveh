@@ -1,7 +1,7 @@
-import type { MockDashboardData } from '../../mock/dashboardData';
+import type { MoneyGuardView } from '../../domain/dashboard/types';
 
 interface Props {
-  data: MockDashboardData['moneyGuard'];
+  data: MoneyGuardView;
 }
 
 export default function MoneyGuardCard({ data }: Props) {

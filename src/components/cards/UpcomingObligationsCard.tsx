@@ -1,7 +1,7 @@
-import type { MockDashboardData } from '../../mock/dashboardData';
+import type { ObligationsView } from '../../domain/dashboard/types';
 
 interface Props {
-  data: MockDashboardData['obligations'];
+  data: ObligationsView;
 }
 
 export default function UpcomingObligationsCard({ data }: Props) {

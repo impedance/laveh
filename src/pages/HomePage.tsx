@@ -1,4 +1,6 @@
-import { mockData } from '../mock/dashboardData';
+import { useStore } from '../store';
+import { calculateDashboard } from '../domain/dashboard/calculateDashboard';
+import type { DashboardInput } from '../domain/dashboard/types';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
 import FreeMoneyHeroCard from '../components/cards/FreeMoneyHeroCard';
@@ -9,6 +11,25 @@ import PrimaryGoalCard from '../components/cards/PrimaryGoalCard';
 import RecurringExpensesCard from '../components/cards/RecurringExpensesCard';
 
 export default function HomePage() {
+  const store = useStore();
+
+  const input: DashboardInput = {
+    accounts: store.accounts,
+    transactions: store.transactions,
+    categories: store.categories,
+    obligations: store.obligations,
+    allocations: store.allocations,
+    goals: store.goals,
+    importBatches: store.importBatches,
+    rules: store.rules,
+    nextIncomeDate: store.nextIncomeDate,
+    expectedMonthlyIncome: store.expectedMonthlyIncome,
+    todayFlexibleSpent: store.todayFlexibleSpent,
+    today: new Date().toISOString().slice(0, 10),
+  };
+
+  const vm = calculateDashboard(input);
+
   return (
     <AppLayout>
       <div className="mb-3 flex items-center justify-between">
@@ -26,12 +47,12 @@ export default function HomePage() {
       </div>
 
       <div className="flex flex-col gap-[14px]">
-        <FreeMoneyHeroCard data={mockData.freeMoney} />
-        <UpcomingObligationsCard data={mockData.obligations} />
-        <SafeDailyPaceCard data={mockData.safeDailyPace} />
-        <MoneyGuardCard data={mockData.moneyGuard} />
-        <PrimaryGoalCard data={mockData.primaryGoal} />
-        <RecurringExpensesCard data={mockData.recurringExpenses} />
+        <FreeMoneyHeroCard data={vm.freeMoney} />
+        <UpcomingObligationsCard data={vm.obligations} />
+        <SafeDailyPaceCard data={vm.safeDailyPace} />
+        <MoneyGuardCard data={vm.moneyGuard} />
+        <PrimaryGoalCard data={vm.primaryGoal} />
+        <RecurringExpensesCard data={vm.recurringExpenses} />
       </div>
 
       <div className="mt-[14px]">

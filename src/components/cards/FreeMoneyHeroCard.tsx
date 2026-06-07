@@ -1,7 +1,7 @@
-import type { MockDashboardData } from '../../mock/dashboardData';
+import type { FreeMoneyView } from '../../domain/dashboard/types';
 
 interface Props {
-  data: MockDashboardData['freeMoney'];
+  data: FreeMoneyView;
 }
 
 export default function FreeMoneyHeroCard({ data }: Props) {

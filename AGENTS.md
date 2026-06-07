@@ -41,13 +41,6 @@ Anchors (`AICODE-NOTE:`, `AICODE-TODO:`, `AICODE-QUESTION:`) — лёгкий с
 - **suggest** (`make anchors-suggest TASK="<task>"`) read-only: предложить релевантные anchor-изменения.
 - **audit** (`make anchors-audit`) read-only: аудит текущих якорей.
 - **apply** (`make anchors-apply ANCHOR_PLAN=<plan-file>`): применить изменения из план-файла.
-- Добавлять 1–3 анкера за обычную задачу, удалять stale при завершении.
-
-### Когда использовать в планах
-- `AICODE-NOTE:` — зафиксировать архитектурное решение, неочевидную зависимость, причину выбора.
-- `AICODE-TODO:` — отметить незавершённую работу, известный баг, следующий шаг.
-- `AICODE-QUESTION:` — зафиксировать открытый вопрос на будущее.
-- В начале плана секции указывать: `<!-- AICODE-NOTE: relevant anchors from <file> -->`
 
 ## 5a) AICODE anchor workflow
 
