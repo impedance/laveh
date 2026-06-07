@@ -120,6 +120,7 @@ function computeMoneyGuardView(
   importBatches: ImportBatch[],
   freeAmount: number,
   mode: Mode,
+  uncategorizedCount: number,
 ): MoneyGuardView {
   const warnItem = obligations.find((o) => o.type === 'warn');
 
@@ -129,6 +130,11 @@ function computeMoneyGuardView(
     action = {
       title: `Защитить платёж по ${warnItem.title}`,
       description: `Распредели средства, чтобы все обязательства были закрыты.`,
+    };
+  } else if (uncategorizedCount > 0) {
+    action = {
+      title: `${uncategorizedCount} операций без категории`,
+      description: 'Проверь и назначь категории для новых операций.',
     };
   } else if (importBatches.length === 0) {
     action = {
@@ -141,8 +147,6 @@ function computeMoneyGuardView(
       description: 'Свободных средств недостаточно. Пересмотри план трат.',
     };
   }
-
-  const uncategorizedCount = 0;
 
   return {
     actionCount: action ? 1 : 0,
@@ -235,11 +239,14 @@ export function calculateDashboard(input: DashboardInput): DashboardViewModel {
     ? `${daysBetween(lastImportBatch.date, input.today)} дня назад`
     : 'Импорт не проводился';
 
+  const uncategorizedCount = input.transactions.filter((t) => !t.isReviewed).length;
+
   const moneyGuard = computeMoneyGuardView(
     obligationsView.items,
     input.importBatches,
     freeAmount,
     mode,
+    uncategorizedCount,
   );
 
   const primaryGoal = computePrimaryGoalView(input.goals.find((g) => g.isPrimary));

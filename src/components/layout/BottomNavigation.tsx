@@ -1,18 +1,24 @@
+interface Props {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
 const tabs = [
-  { label: 'Главная', active: true },
-  { label: 'Операции', active: false },
-  { label: 'План', active: false },
-  { label: 'Импорт', active: false },
+  { key: 'home', label: 'Главная' },
+  { key: 'operations', label: 'Операции' },
+  { key: 'plan', label: 'План' },
+  { key: 'import', label: 'Импорт' },
 ];
 
-export default function BottomNavigation() {
+export default function BottomNavigation({ activeTab, onTabChange }: Props) {
   return (
     <nav className="flex gap-1 rounded-[18px] bg-[#121821] p-1">
       {tabs.map((tab) => (
         <button
-          key={tab.label}
+          key={tab.key}
+          onClick={() => onTabChange(tab.key)}
           className={`flex-1 rounded-[14px] px-3 py-3 text-center text-sm font-semibold transition-colors ${
-            tab.active
+            activeTab === tab.key
               ? 'bg-[#75b8ff] text-[#090d12]'
               : 'text-[#8795a5] hover:text-[#eef4f8]'
           }`}

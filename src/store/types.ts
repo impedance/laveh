@@ -14,6 +14,9 @@ export interface Transaction {
   categoryId?: string;
   accountId: string;
   importBatchId?: string;
+  externalHash?: string;
+  isReviewed?: boolean;
+  sourceProfile?: string;
 }
 
 export interface Category {
@@ -61,6 +64,9 @@ export interface CategorizationRule {
   pattern: string;
   categoryId: string;
   priority: number;
+  matchType: 'contains' | 'equals' | 'regex';
+  matchField: 'description';
+  active?: boolean;
 }
 
 export interface StoreState {
@@ -79,11 +85,29 @@ export interface StoreState {
 
 export interface StoreActions {
   addTransaction: (tx: Omit<Transaction, 'id'>) => void;
+  addTransactions: (txns: Omit<Transaction, 'id'>[]) => void;
   updateCategory: (id: string, updates: Partial<Category>) => void;
   setNextIncomeDate: (date: string) => void;
   setExpectedMonthlyIncome: (amount: number) => void;
   setTodayFlexibleSpent: (amount: number) => void;
   restoreFromJSON: (json: string) => void;
+  commitImport: (transactions: Omit<Transaction, 'id'>[], batch: Omit<ImportBatch, 'id'>) => void;
+  undoImport: (batchId: string) => void;
+  updateTransactionCategory: (id: string, categoryId: string) => void;
+  addRule: (rule: Omit<CategorizationRule, 'id'>) => void;
+  toggleRuleActive: (id: string, active: boolean) => void;
+  upsertObligation: (obligation: Omit<Obligation, 'id'> & { id?: string }) => void;
+  deleteObligation: (id: string) => void;
+  upsertCategory: (category: Omit<Category, 'id'> & { id?: string }) => void;
+  setGoalProgress: (id: string, currentAmount: number) => void;
+  addGoal: (goal: Omit<Goal, 'id'>) => void;
+  updateGoal: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
+  addAccount: (account: Omit<Account, 'id'>) => void;
+  updateAccount: (id: string, updates: Partial<Account>) => void;
+  deleteAccount: (id: string) => void;
+  addAllocation: (allocation: Omit<Allocation, 'id'>) => void;
+  deleteAllocation: (id: string) => void;
 }
 
 export type MorganStore = StoreState & StoreActions;

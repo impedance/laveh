@@ -9,8 +9,13 @@ import SafeDailyPaceCard from '../components/cards/SafeDailyPaceCard';
 import MoneyGuardCard from '../components/cards/MoneyGuardCard';
 import PrimaryGoalCard from '../components/cards/PrimaryGoalCard';
 import RecurringExpensesCard from '../components/cards/RecurringExpensesCard';
+import ReviewQueue from '../components/operations/ReviewQueue';
 
-export default function HomePage() {
+interface Props {
+  onTabChange: (tab: string) => void;
+}
+
+export default function HomePage({ onTabChange }: Props) {
   const store = useStore();
 
   const input: DashboardInput = {
@@ -47,6 +52,7 @@ export default function HomePage() {
       </div>
 
       <div className="flex flex-col gap-[14px]">
+        <ReviewQueue />
         <FreeMoneyHeroCard data={vm.freeMoney} />
         <UpcomingObligationsCard data={vm.obligations} />
         <SafeDailyPaceCard data={vm.safeDailyPace} />
@@ -56,7 +62,7 @@ export default function HomePage() {
       </div>
 
       <div className="mt-[14px]">
-        <BottomNavigation />
+        <BottomNavigation activeTab="home" onTabChange={onTabChange} />
       </div>
     </AppLayout>
   );
