@@ -143,6 +143,19 @@ export const useStore = create<DenezhkaStore>()(
         });
       },
 
+      deleteCategory: (id: string) => {
+        set({
+          categories: get().categories.filter((c) => c.id !== id),
+          transactions: get().transactions.map((t) =>
+            t.categoryId === id ? { ...t, categoryId: undefined } : t,
+          ),
+          bankMappings: get().bankMappings.filter((m) => m.categoryId !== id),
+          rules: get().rules
+            .filter((r) => r.categoryId !== id)
+            .map((r, i) => ({ ...r, priority: i })),
+        });
+      },
+
       upsertCategory: (category: Omit<Category, 'id'> & { id?: string }) => {
         if (category.id) {
           set({

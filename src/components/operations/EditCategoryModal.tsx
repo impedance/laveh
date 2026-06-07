@@ -9,6 +9,7 @@ interface Props {
 
 export default function EditCategoryModal({ transaction, onClose }: Props) {
   const categories = useStore((s) => s.categories);
+  const transactions = useStore((s) => s.transactions);
   const updateTransactionCategory = useStore((s) => s.updateTransactionCategory);
   const addRule = useStore((s) => s.addRule);
   const learnBankMapping = useStore((s) => s.learnBankMapping);
@@ -17,6 +18,22 @@ export default function EditCategoryModal({ transaction, onClose }: Props) {
   const [alwaysCategorize, setAlwaysCategorize] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+
+  const similarTransactions = transaction.bankCategory
+    ? transactions.filter((t) => t.id !== transaction.id && t.bankCategory === transaction.bankCategory && !t.categoryId)
+    : transactions.filter((t) => t.id !== transaction.id && t.description === transaction.description && !t.categoryId);
+
+  const handleApplySimilar = () => {
+    if (!selected) return;
+    updateTransactionCategory(transaction.id, selected);
+    similarTransactions.forEach((t) => {
+      updateTransactionCategory(t.id, selected);
+    });
+    if (transaction.bankCategory && selected) {
+      learnBankMapping(transaction.bankCategory, selected);
+    }
+    onClose();
+  };
 
   const handleSave = () => {
     updateTransactionCategory(transaction.id, selected);
@@ -38,6 +55,10 @@ export default function EditCategoryModal({ transaction, onClose }: Props) {
   const handleCreateGroup = () => {
     const name = newGroupName.trim();
     if (!name) return;
+    if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      window.alert('Категория с таким именем уже существует');
+      return;
+    }
     upsertCategory({ name, plan: 0, type: 'living' });
     const created = useStore.getState().categories.find((c) => c.name === name);
     if (created) {
@@ -111,6 +132,14 @@ export default function EditCategoryModal({ transaction, onClose }: Props) {
           />
           Всегда назначать эту группу для таких операций
         </label>
+        {similarTransactions.length > 0 && selected && (
+          <button
+            onClick={handleApplySimilar}
+            className="mb-4 w-full rounded-xl border border-[rgba(255,255,255,0.12)] px-4 py-3 text-sm font-semibold text-[#eef4f8] hover:bg-[#1e2a3a]"
+          >
+            Применить ко всем похожим ({similarTransactions.length})
+          </button>
+        )}
         <div className="flex gap-2">
           <button
             onClick={onClose}

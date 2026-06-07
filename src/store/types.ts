@@ -128,6 +128,7 @@ export interface StoreActions {
   upsertObligation: (obligation: Omit<Obligation, 'id'> & { id?: string }) => void;
   deleteObligation: (id: string) => void;
   upsertCategory: (category: Omit<Category, 'id'> & { id?: string }) => void;
+  deleteCategory: (id: string) => void;
   setGoalProgress: (id: string, currentAmount: number) => void;
   addGoal: (goal: Omit<Goal, 'id'>) => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;

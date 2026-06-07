@@ -17,6 +17,9 @@ export default function PlanPage({ onTabChange }: Props) {
   const [newOblDue, setNewOblDue] = useState('');
   const [newCatName, setNewCatName] = useState('');
   const [newCatPlan, setNewCatPlan] = useState(0);
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatPlan, setEditCatPlan] = useState(0);
   const [reserveAmount, setReserveAmount] = useState(0);
   const [goalTarget, setGoalTarget] = useState(store.goals[0]?.targetAmount || 0);
   const [goalCurrent, setGoalCurrent] = useState(store.goals[0]?.currentAmount || 0);
@@ -41,8 +44,12 @@ export default function PlanPage({ onTabChange }: Props) {
 
   const handleAddCategory = () => {
     if (!newCatName || newCatPlan <= 0) return;
+    if (store.categories.some((c) => c.name.toLowerCase() === newCatName.trim().toLowerCase())) {
+      window.alert('Категория с таким именем уже существует');
+      return;
+    }
     store.upsertCategory({
-      name: newCatName,
+      name: newCatName.trim(),
       plan: newCatPlan,
       type: 'living',
     });
@@ -145,9 +152,72 @@ export default function PlanPage({ onTabChange }: Props) {
           <h3 className="mb-3 text-base font-bold text-[#eef4f8]">Категории</h3>
           <div className="mb-3 space-y-2">
             {store.categories.map((cat) => (
-              <div key={cat.id} className="flex items-center justify-between rounded-xl bg-[#171f2a] p-3">
-                <span className="text-sm font-medium text-[#eef4f8]">{cat.name}</span>
-                <span className="text-sm text-[#8795a5]">{cat.plan.toLocaleString('ru-RU')} ₽/мес</span>
+              <div key={cat.id} className="rounded-xl bg-[#171f2a] p-3">
+                {editingCatId === cat.id ? (
+                  <div className="space-y-2">
+                    <input
+                      value={editCatName}
+                      onChange={(e) => setEditCatName(e.target.value)}
+                      className="w-full rounded-xl bg-[#121821] px-3 py-2 text-sm text-[#eef4f8]"
+                    />
+                    <input
+                      type="number"
+                      value={editCatPlan || ''}
+                      onChange={(e) => setEditCatPlan(Number(e.target.value))}
+                      className="w-full rounded-xl bg-[#121821] px-3 py-2 text-sm text-[#eef4f8]"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          const trimmed = editCatName.trim();
+                          if (trimmed.toLowerCase() !== cat.name.toLowerCase() &&
+                              store.categories.some((c) => c.id !== cat.id && c.name.toLowerCase() === trimmed.toLowerCase())) {
+                            window.alert('Категория с таким именем уже существует');
+                            return;
+                          }
+                          store.upsertCategory({ id: cat.id, name: trimmed, plan: editCatPlan, type: cat.type });
+                          setEditingCatId(null);
+                        }}
+                        className="flex-1 rounded-xl bg-[#75b8ff] px-3 py-1.5 text-xs font-bold text-[#090d12]"
+                      >
+                        Сохранить
+                      </button>
+                      <button
+                        onClick={() => setEditingCatId(null)}
+                        className="flex-1 rounded-xl border border-[rgba(255,255,255,0.08)] px-3 py-1.5 text-xs text-[#8795a5]"
+                      >
+                        Отмена
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#eef4f8]">{cat.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-[#8795a5]">{cat.plan.toLocaleString('ru-RU')} ₽/мес</span>
+                      <button
+                        onClick={() => {
+                          setEditingCatId(cat.id);
+                          setEditCatName(cat.name);
+                          setEditCatPlan(cat.plan);
+                        }}
+                        className="text-xs text-[#8795a5] hover:text-[#eef4f8]"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Удалить категорию «${cat.name}»? Транзакции останутся без группы.`)) {
+                            store.deleteCategory(cat.id);
+                          }
+                        }}
+                        className="text-xs text-[#e74c3c]"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
