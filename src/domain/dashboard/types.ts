@@ -51,17 +51,6 @@ export interface SafeDailyPaceView {
   percentUsed: number;
 }
 
-export interface MoneyGuardAction {
-  title: string;
-  description: string;
-}
-
-export interface MoneyGuardView {
-  actionCount: number;
-  action: MoneyGuardAction;
-  uncategorized: { count: number; label: string };
-}
-
 export interface PrimaryGoalView {
   title: string;
   subtitle: string;
@@ -71,22 +60,9 @@ export interface PrimaryGoalView {
   nextMilestone: number;
 }
 
-export interface RecurringExpenseItemView {
-  name: string;
-  percent: number;
-  amount: number;
-  type?: 'warn' | 'green';
-}
-
-export interface RecurringExpensesView {
-  items: RecurringExpenseItemView[];
-}
-
 export interface DashboardViewModel {
   freeMoney: FreeMoneyView;
   obligations: ObligationsView;
   safeDailyPace: SafeDailyPaceView;
-  moneyGuard: MoneyGuardView;
   primaryGoal: PrimaryGoalView;
-  recurringExpenses: RecurringExpensesView;
 }

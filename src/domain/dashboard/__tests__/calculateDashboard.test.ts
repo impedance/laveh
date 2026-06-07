@@ -134,25 +134,6 @@ describe('calculateDashboard', () => {
     expect(creditCardObl!.type).toBe('ok');
   });
 
-  it('moneyGuard recommends underfunded obligation first', () => {
-    const result = calculateDashboard(baseInput);
-    expect(result.moneyGuard.action.title).toContain('Кредитка');
-  });
-
-  it('moneyGuard returns action when everything is good with no imports', () => {
-    const input: DashboardInput = {
-      ...baseInput,
-      allocations: [
-        { id: 'alloc-1', obligationId: 'obl-1', amount: 84000, date: '2026-06-01' },
-        { id: 'alloc-2', obligationId: 'obl-2', amount: 34000, date: '2026-06-01' },
-        { id: 'alloc-3', obligationId: 'obl-3', amount: 30000, date: '2026-06-01' },
-      ],
-      importBatches: [],
-    };
-    const result = calculateDashboard(input);
-    expect(result.moneyGuard.action.title).toBe('Импортировать выписку');
-  });
-
   it('primaryGoal progress = current / target', () => {
     const result = calculateDashboard(baseInput);
     expect(result.primaryGoal.percent).toBe(57);
@@ -160,9 +141,5 @@ describe('calculateDashboard', () => {
     expect(result.primaryGoal.target).toBe(700000);
   });
 
-  it('recurring expense items match categories', () => {
-    const result = calculateDashboard(baseInput);
-    expect(result.recurringExpenses.items).toHaveLength(3);
-    expect(result.recurringExpenses.items[0].name).toBe('Продукты');
-  });
+
 });

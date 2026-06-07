@@ -6,9 +6,8 @@ import BottomNavigation from '../components/layout/BottomNavigation';
 import FreeMoneyHeroCard from '../components/cards/FreeMoneyHeroCard';
 import UpcomingObligationsCard from '../components/cards/UpcomingObligationsCard';
 import SafeDailyPaceCard from '../components/cards/SafeDailyPaceCard';
-import MoneyGuardCard from '../components/cards/MoneyGuardCard';
 import PrimaryGoalCard from '../components/cards/PrimaryGoalCard';
-import RecurringExpensesCard from '../components/cards/RecurringExpensesCard';
+import SpendingGroupsCard from '../components/cards/SpendingGroupsCard';
 import ReviewQueue from '../components/operations/ReviewQueue';
 
 interface Props {
@@ -52,9 +51,8 @@ export default function HomePage({ onTabChange }: Props) {
         <FreeMoneyHeroCard data={vm.freeMoney} />
         <UpcomingObligationsCard data={vm.obligations} />
         <SafeDailyPaceCard data={vm.safeDailyPace} />
-        <MoneyGuardCard data={vm.moneyGuard} />
+        <SpendingGroupsCard categories={store.categories} />
         <PrimaryGoalCard data={vm.primaryGoal} />
-        <RecurringExpensesCard data={vm.recurringExpenses} />
       </div>
 
       <div className="mt-[14px]">

@@ -45,7 +45,6 @@ export interface Category {
   name: string;
   plan: number;
   type: 'living' | 'savings' | 'obligation';
-  group?: string;
 }
 
 export interface Obligation {

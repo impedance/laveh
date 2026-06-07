@@ -1,5 +1,5 @@
-import type { Account, Obligation, Allocation, Goal, Category, ImportBatch } from '../../store/types';
-import type { DashboardInput, DashboardViewModel, Mode, FreeMoneyView, ObligationsView, ObligationItemView, SafeDailyPaceView, MoneyGuardView, MoneyGuardAction, PrimaryGoalView, RecurringExpensesView } from './types';
+import type { Account, Obligation, Allocation, Goal, Category } from '../../store/types';
+import type { DashboardInput, DashboardViewModel, Mode, FreeMoneyView, ObligationsView, ObligationItemView, SafeDailyPaceView, PrimaryGoalView } from './types';
 import { daysBetween, formatDate } from '../money/dateUtils';
 import { formatMoney } from '../money/formatMoney';
 
@@ -115,49 +115,6 @@ function computeSafeDailyPace(
   };
 }
 
-function computeMoneyGuardView(
-  obligations: ObligationItemView[],
-  importBatches: ImportBatch[],
-  freeAmount: number,
-  mode: Mode,
-  uncategorizedCount: number,
-): MoneyGuardView {
-  const warnItem = obligations.find((o) => o.type === 'warn');
-
-  let action: MoneyGuardAction | null = null;
-
-  if (warnItem) {
-    action = {
-      title: `Защитить платёж по ${warnItem.title}`,
-      description: `Распредели средства, чтобы все обязательства были закрыты.`,
-    };
-  } else if (uncategorizedCount > 0) {
-    action = {
-      title: `${uncategorizedCount} операций без категории`,
-      description: 'Проверь и назначь категории для новых операций.',
-    };
-  } else if (importBatches.length === 0) {
-    action = {
-      title: 'Импортировать выписку',
-      description: 'Добавь Excel-выписку из Т-Банка, чтобы актуализировать данные.',
-    };
-  } else if (mode === 'stop') {
-    action = {
-      title: 'Сократить расходы',
-      description: 'Свободных средств недостаточно. Пересмотри план трат.',
-    };
-  }
-
-  return {
-    actionCount: action ? 1 : 0,
-    action: action ?? { title: 'Всё в порядке', description: 'Все обязательства защищены.' },
-    uncategorized: {
-      count: uncategorizedCount,
-      label: 'операции без категории',
-    },
-  };
-}
-
 function computePrimaryGoalView(goal: Goal | undefined): PrimaryGoalView | null {
   if (!goal) return null;
 
@@ -178,34 +135,6 @@ function computePrimaryGoalView(goal: Goal | undefined): PrimaryGoalView | null 
   };
 }
 
-function computeRecurringExpenses(
-  categories: Category[],
-  today: string,
-  nextIncomeDate: string,
-): RecurringExpensesView {
-  const daysToIncome = nextIncomeDate ? Math.max(1, daysBetween(today, nextIncomeDate)) : 30;
-  const daysInMonth = 30;
-  const monthFraction = daysToIncome / daysInMonth;
-
-  const items = categories
-    .filter((c) => c.type === 'living')
-    .map((c) => {
-      const expectedByNow = Math.round(c.plan * (1 - monthFraction));
-      const spent = 0;
-      const percent = c.plan > 0 ? Math.round((spent / c.plan) * 100) : 0;
-      const abovePace = spent > expectedByNow * 1.15;
-
-      return {
-        name: c.name,
-        percent,
-        amount: spent !== 0 ? spent : c.plan,
-        type: abovePace ? 'warn' as const : spent === 0 ? undefined : 'green' as const,
-      };
-    });
-
-  return { items };
-}
-
 export function calculateDashboard(input: DashboardInput): DashboardViewModel {
   const cashBalance = computeCurrentCashBalance(input.accounts);
 
@@ -217,7 +146,7 @@ export function calculateDashboard(input: DashboardInput): DashboardViewModel {
 
   const { amount: freeAmount, totalRequired } = computeFreeUntilNextIncome(input);
 
-  const { mode, label: modeLabel } = computeMode(freeAmount, input.expectedMonthlyIncome);
+  const { label: modeLabel } = computeMode(freeAmount, input.expectedMonthlyIncome);
 
   const daysUntilNextIncome = input.nextIncomeDate
     ? Math.max(0, daysBetween(input.today, input.nextIncomeDate))
@@ -239,23 +168,7 @@ export function calculateDashboard(input: DashboardInput): DashboardViewModel {
     ? `${daysBetween(lastImportBatch.date, input.today)} дня назад`
     : 'Импорт не проводился';
 
-  const uncategorizedCount = input.transactions.filter((t) => !t.isReviewed).length;
-
-  const moneyGuard = computeMoneyGuardView(
-    obligationsView.items,
-    input.importBatches,
-    freeAmount,
-    mode,
-    uncategorizedCount,
-  );
-
   const primaryGoal = computePrimaryGoalView(input.goals.find((g) => g.isPrimary));
-
-  const recurringExpenses = computeRecurringExpenses(
-    input.categories,
-    input.today,
-    input.nextIncomeDate,
-  );
 
   const freeMoney: FreeMoneyView = {
     amount: freeAmount,
@@ -272,7 +185,6 @@ export function calculateDashboard(input: DashboardInput): DashboardViewModel {
     freeMoney,
     obligations: obligationsView,
     safeDailyPace,
-    moneyGuard,
     primaryGoal: primaryGoal ?? {
       title: 'Нет цели',
       subtitle: 'Добавьте финансовую цель',
@@ -281,6 +193,5 @@ export function calculateDashboard(input: DashboardInput): DashboardViewModel {
       target: 0,
       nextMilestone: 0,
     },
-    recurringExpenses,
   };
 }
