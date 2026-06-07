@@ -5,7 +5,7 @@
 - Files/docs: English (`README.md`, `docs/`, `AICODE-*` lines, code comments).
 
 ## What this repo is
-Morgan Finance — local-first iPhone PWA for personal cashflow hygiene.
+Денежка — local-first iPhone PWA for personal cashflow hygiene.
 Vite + React 19 + TypeScript 6 + Tailwind 4 + Zustand 5(persist) + SheetJS.
 No backend. Manual Excel/CSV import from T-Bank.
 

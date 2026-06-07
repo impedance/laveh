@@ -2,7 +2,7 @@
 
 ## 0) Orientation
 - Read: `AGENTS.md`, `docs/index.md`, `tasks/01-product-and-stack.md` (stack decisions), `tasks/05-visual-phases-delivery.md` (project structure)
-- Anchor context: `docs/index.md` — Code Map, Typing Surfaces. Existing HTML mock: `morgan_dark_dashboard_mock.html`.
+- Anchor context: `docs/index.md` — Code Map, Typing Surfaces. Existing HTML mock: `denezhka_dark_dashboard_mock.html`.
 - Current state: **no `src/` exists, no `package.json`, no configs**. The agent harness (`make smoke`, `make preflight`) passes only as a no-op because no language toolchain is wired yet.
 
 ## 1) Outcome
@@ -25,7 +25,7 @@
   - `vite.config.ts` (React plugin, Tailwind plugin, PWA plugin commented out for now)
   - `tailwind.config.ts` (dark theme tokens from mock: colors, radii, font)
   - `eslint.config.js` (flat config, TS rules)
-  - `src/app/App.tsx` — minimal "Morgan Finance" placeholder
+  - `src/app/App.tsx` — minimal "Денежка" placeholder
   - `src/app/routes.tsx` — empty placeholder
   - `src/main.tsx` — ReactDOM.createRoot entry
   - `index.html` — Vite entry with `<div id="root">`, Inter font from Google Fonts
@@ -34,7 +34,7 @@
   - `vitest.config.ts` — merged with vite config
   - `vitest.setup.ts` — empty placeholder
 - Out of scope:
-  - Any dashboard UI beyond `"Morgan Finance"` placeholder.
+  - Any dashboard UI beyond `"Денежка"` placeholder.
   - Zustand store, persist middleware, data types.
   - Excel parsing, PWA manifest, service worker registration.
   - Backup/restore.
@@ -93,7 +93,7 @@
      resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
    });
    ```
-6. Create `tailwind.config.ts` using color tokens from `morgan_dark_dashboard_mock.html`.
+6. Create `tailwind.config.ts` using color tokens from `denezhka_dark_dashboard_mock.html`.
 7. Create `postcss.config.js`: `{ plugins: { tailwindcss: {}, autoprefixer: {} } }`
 8. Create `eslint.config.js` with `typescript-eslint` flat config.
 9. Create `vitest.config.ts` extending vite config.
@@ -101,7 +101,7 @@
 11. Write `index.html` with `<div id="root">`, Inter font, `<script src="/src/main.tsx">`.
 12. Write `src/index.css` with Tailwind directives and dark theme CSS vars.
 13. Write `src/main.tsx` — React 18 createRoot.
-14. Write `src/app/App.tsx` — placeholder `<div>Morgan Finance</div>`.
+14. Write `src/app/App.tsx` — placeholder `<div>Денежка</div>`.
 15. Write `src/app/routes.tsx` — empty placeholder export.
 16. Update `package.json` scripts: `"dev": "vite"`, `"build": "tsc && vite build"`, `"preview": "vite preview"`, `"lint": "eslint src/ --max-warnings 0"`, `"typecheck": "tsc --noEmit"`, `"test": "vitest run"`
 17. Append `node_modules/` and `dist/` to `.gitignore`.

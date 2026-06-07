@@ -53,6 +53,7 @@ export default function PlanPage({ onTabChange }: Props) {
   const handleSaveGoal = () => {
     if (store.goals[0]) {
       store.setGoalProgress(store.goals[0].id, goalCurrent);
+      store.updateGoal(store.goals[0].id, { targetAmount: goalTarget });
     }
   };
 

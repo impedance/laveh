@@ -21,7 +21,7 @@
 - In scope:
   - `vite-plugin-pwa` configuration in `vite.config.ts`:
     - `registerType: 'autoUpdate'`
-    - `manifest`: name=Морган Финансы, short_name=Морган, theme_color=#090d12, background_color=#090d12, display=standalone, icons (192px and 512px PNG)
+    - `manifest`: name=Денежка, short_name=Денежка, theme_color=#090d12, background_color=#090d12, display=standalone, icons (192px and 512px PNG)
     - `workbox`: `globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']`, `runtimeCaching` for Google Fonts (staleWhileRevalidate)
   - App icon: generate a simple SVG-based icon (M letter on dark bg) and export to 192px and 512px PNG. Place in `public/icons/`.
   - Favicon: `public/favicon.svg` and `public/favicon.ico`.
@@ -77,8 +77,8 @@
    VitePWA({
      registerType: 'autoUpdate',
      manifest: {
-       name: 'Морган Финансы',
-       short_name: 'Морган',
+       name: 'Денежка',
+       short_name: 'Денежка',
        description: 'Персональный финмонитор',
        theme_color: '#090d12',
        background_color: '#090d12',

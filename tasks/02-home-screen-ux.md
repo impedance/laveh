@@ -26,7 +26,7 @@ A PWA is feasible for this MVP on iPhone, with important limitations.
 The app must support exporting all app data to JSON:
 
 ```txt
-Settings → Export backup → morgan-backup-YYYY-MM-DD.json
+Settings → Export backup → denezhka-backup-YYYY-MM-DD.json
 ```
 
 And importing it back:

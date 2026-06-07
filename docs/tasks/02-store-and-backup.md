@@ -22,8 +22,8 @@
 - In scope:
   - `src/store/types.ts` — all 8 entity types from `tasks/03-data-and-calculations.md` §11.
   - `src/store/index.ts` — Zustand store with typed slices: `accountsSlice`, `transactionsSlice`, `categoriesSlice`, `obligationsSlice`, `allocationsSlice`, `goalsSlice`, `importBatchesSlice`, `rulesSlice`.
-  - Zustand `persist` middleware → localStorage (key: `morgan-finance-store`).
-  - `src/store/seed.ts` — demo data matching the numbers in `morgan_dark_dashboard_mock.html` (accounts: 1 cash account with 212 000 ₽; obligations: ипотека, автокредит, кредитка; goals: credit card payoff; categories: продукты, подписки, транспорт).
+  - Zustand `persist` middleware → localStorage (key: `denezhka-store`).
+  - `src/store/seed.ts` — demo data matching the numbers in `denezhka_dark_dashboard_mock.html` (accounts: 1 cash account with 212 000 ₽; obligations: ипотека, автокредит, кредитка; goals: credit card payoff; categories: продукты, подписки, транспорт).
   - `src/store/__tests__/store.test.ts` — at minimum: store initializes from seed data, persist middleware exists, store exports clean JSON.
   - `src/domain/money/formatMoney.ts` — `formatMoney(amount: number): string` → `"212 000 ₽"`.
   - `src/domain/money/dateUtils.ts` — `daysBetween(a: string, b: string): number`, `formatDate(date: string): string`.
@@ -60,7 +60,7 @@
 
 ## 4) Implementation steps
 1. Create `src/store/types.ts` with all 8 entity types. Use `string` for dates (ISO 8601) to ensure JSON serializability.
-2. Define store interface in `src/store/types.ts`: `type MorganStore = { accounts: Account[]; transactions: Transaction[]; ... }` plus action methods.
+2. Define store interface in `src/store/types.ts`: `type DenezhkaStore = { accounts: Account[]; transactions: Transaction[]; ... }` plus action methods.
 3. Create `src/store/seed.ts` — demo data:
    - `accounts`: `[{ id: 'cash-1', name: 'Основной счёт', type: 'debit', includeInCashBalance: true, currentBalance: 212000 }]`
    - `obligations`: ипотека 84 000 (protected), автокредит 34 000 (protected), кредитка 30 000 (underfunded, gap 12 000)
@@ -68,7 +68,7 @@
    - `categories`: продукты (plan 60 000), подписки (plan 5 000), транспорт (plan 20 000)
    - Empty arrays for transactions, allocations, importBatches, rules.
 4. Create `src/store/index.ts`:
-   - `useStore = create<MorganStore>()(persist(storeDefinition, { name: 'morgan-finance-store' }))`
+   - `useStore = create<DenezhkaStore>()(persist(storeDefinition, { name: 'denezhka-store' }))`
    - Actions: `addTransaction`, `updateCategory`, `setNextIncomeDate`, `exportBackup`, `restoreBackup`, etc.
 5. Create `src/domain/money/formatMoney.ts` — number → `"212 000 ₽"` (space as thousand separator).
 6. Create `src/domain/money/dateUtils.ts` — `daysBetween`, `formatDate`.
@@ -92,9 +92,9 @@
   - `npm run test` → expected: store tests pass.
   - `npm run lint` → expected: exit 0.
   - Manual: open `npx vite` → dashboard renders same as Phase 1.
-  - Manual: click Export → downloads `morgan-backup-YYYY-MM-DD.json`.
+  - Manual: click Export → downloads `denezhka-backup-YYYY-MM-DD.json`.
   - Manual: edit JSON file, restore → dashboard reflects changes.
-  - `localStorage.getItem('morgan-finance-store')` in browser console returns valid JSON.
+  - `localStorage.getItem('denezhka-store')` in browser console returns valid JSON.
 - Pareto blackbox: one vitest test that seeds store, exports JSON, parses it, restores, and verifies state equality.
 - Rollback:
   - Restore deleted `src/mock/dashboardData.ts` from git.

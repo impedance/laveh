@@ -110,4 +110,4 @@ export interface StoreActions {
   deleteAllocation: (id: string) => void;
 }
 
-export type MorganStore = StoreState & StoreActions;
+export type DenezhkaStore = StoreState & StoreActions;

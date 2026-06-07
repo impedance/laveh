@@ -1,15 +1,15 @@
 # Work Plan: Phase 1 — Static UI (HTML Mock → React Components)
 
 ## 0) Orientation
-- Read: `tasks/02-home-screen-ux.md` (component specs), `tasks/05-visual-phases-delivery.md` §18-19 (visual design, project structure), `morgan_dark_dashboard_mock.html` (reference render)
+- Read: `tasks/02-home-screen-ux.md` (component specs), `tasks/05-visual-phases-delivery.md` §18-19 (visual design, project structure), `denezhka_dark_dashboard_mock.html` (reference render)
 - Anchor context: `docs/index.md` → Component paths: `src/components/cards/*`, `src/components/layout/*`, `src/pages/HomePage.tsx`
 - Dependency: **Phase 0 completed** (Vite + React + TS + Tailwind dev server working).
-- Current state: `morgan_dark_dashboard_mock.html` has a full static dark dashboard. `src/app/App.tsx` renders a placeholder.
+- Current state: `denezhka_dark_dashboard_mock.html` has a full static dark dashboard. `src/app/App.tsx` renders a placeholder.
 
 ## 1) Outcome
 - Goal: Replicate the dark dashboard mock exactly in React components, using hardcoded mock data. No store, no calculations, no routing.
 - Success criteria:
-  - `npx vite` renders the same 7 dashboard cards as `morgan_dark_dashboard_mock.html`.
+  - `npx vite` renders the same 7 dashboard cards as `denezhka_dark_dashboard_mock.html`.
   - Visual parity: colors, radii, spacing, font sizes match the mock.
   - Layout matches iPhone 430px centered card layout. Desktop shows centered phone-width dashboard.
   - `npm run typecheck` passes.
@@ -20,7 +20,7 @@
 - In scope:
   - Layout shell: `AppLayout.tsx` (max-w-[430px] mx-auto, min-h-screen, dark bg).
   - StatusBar mock (time, battery).
-  - App header ("Morgan", subtitle, avatar).
+  - App header ("Денежка", subtitle, avatar).
   - All 7 dashboard cards per `tasks/02-home-screen-ux.md` §9:
     - `FreeMoneyHeroCard.tsx`
     - `UpcomingObligationsCard.tsx`
@@ -66,7 +66,7 @@
   - Risk: SVG circular progress ring in SafeDailyPaceCard is complex to reproduce → mitigation: use a simple CSS circular progress (conic-gradient or SVG with stroke-dasharray).
 
 ## 4) Implementation steps
-1. Create `src/mock/dashboardData.ts` with a typed mock object matching the values from `morgan_dark_dashboard_mock.html`.
+1. Create `src/mock/dashboardData.ts` with a typed mock object matching the values from `denezhka_dark_dashboard_mock.html`.
 2. Create `src/components/layout/AppLayout.tsx` — dark background wrapper, `max-w-[430px] mx-auto min-h-screen bg-[#090d12]`.
 3. Create `src/components/cards/FreeMoneyHeroCard.tsx` — amount, mode badge, supporting metrics lines.
 4. Create `src/components/cards/UpcomingObligationsCard.tsx` — summary block + 3 obligation rows.
@@ -77,14 +77,14 @@
 9. Create `src/components/layout/BottomNavigation.tsx` — 4 static tabs with icons/emojis from mock.
 10. Create `src/pages/HomePage.tsx` — composes all cards inside AppLayout with data from mock file.
 11. Update `src/app/App.tsx` — render `<HomePage />`.
-12. Compare `npx vite` output side-by-side with `morgan_dark_dashboard_mock.html` in browser. Tweak Tailwind classes until visual parity is achieved.
+12. Compare `npx vite` output side-by-side with `denezhka_dark_dashboard_mock.html` in browser. Tweak Tailwind classes until visual parity is achieved.
 13. Run `npm run typecheck && npm run lint` — fix any errors.
 14. Run `make preflight` — verify all gates pass.
 
 ## 5) Validation
 - Fast gate: `npm run typecheck` → expected: exit 0.
 - Task-specific checks:
-  - Visual: open `npx vite` in browser, compare to `morgan_dark_dashboard_mock.html` — all 7 cards present, colors match, layout centered at 430px.
+  - Visual: open `npx vite` in browser, compare to `denezhka_dark_dashboard_mock.html` — all 7 cards present, colors match, layout centered at 430px.
   - `npm run lint` → expected: exit 0, no warnings.
 - Pareto blackbox: Not applicable for static UI phase — visual check is cheapest and highest-signal.
 - Rollback:

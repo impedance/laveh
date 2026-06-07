@@ -25,7 +25,7 @@ function downloadBackup() {
   const a = document.createElement('a');
   a.href = url;
   const today = new Date().toISOString().slice(0, 10);
-  a.download = `morgan-backup-${today}.json`;
+  a.download = `denezhka-backup-${today}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

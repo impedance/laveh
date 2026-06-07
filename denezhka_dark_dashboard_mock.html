@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Денежка — Dark Dashboard Mock</title>
+    </meta>
+    <div class="container"><div class="status"><div class="eyebrow">Денежка · Dark UI mock</div></div>
+      <div class="phone"><div class="statusbar"><div class="time">21:30</div><div class="icons">●●● 82%</div></div>
+        <div class="appbar"><div class="app-title"><strong>Денежка</strong><span>Финансовая навигация · июнь</span></div><div class="avatar">M</div></div>
+        <section class="hero card"><div class="hero-top"><div><div class="label">Свободно до следующего дохода</div><div class="amount">47 300 ₽</div></div><div class="mode">Режим: спокойно</div></div><div class="hero-gap"><span>Нужно отложить</span><strong>12 000 ₽ до 25 июня</strong></div><div class="hero-sub"><div class="mini"><div class="k">Баланс сейчас</div><div class="v">212 000 ₽</div></div><div class="mini"><div class="k">Распределено</div><div class="v">164 700 ₽</div></div><div class="mini"><div class="k">Следующий доход</div><div class="v">25 июня</div></div><div class="mini"><div class="k">Импорт Excel</div><div class="v">2 дня назад</div></div></div></section>
+        <section class="card"><div class="section-head"><h3>Ближайшие обязательства</h3><span>до 25 июня</span></div><div class="obligation-summary"><div><div class="big">Ещё распределить: 12 000 ₽</div><div class="small">Нужно 158 000 ₽ · уже отложено 146 000 ₽</div></div><button class="btn-small">Закрыть gap</button></div><div class="row"><div><div class="row-title">Ипотека</div><div class="row-sub">10 июня · платёж защищён</div></div><div class="row-amount ok">84 000 ₽</div></div><div class="row"><div><div class="row-title">Автокредит</div><div class="row-sub">15 июня · платёж защищён</div></div><div class="row-amount ok">34 000 ₽</div></div><div class="row"><div><div class="row-title">Кредитка · платёж месяца</div><div class="row-sub">20 июня · не хватает 12 000 ₽</div></div><div class="row-amount warn">30 000 ₽</div></div></section>
+        <section class="card card-pad"><div class="daily"><div><div class="label">Безопасный темп трат</div><div class="number">2 490 ₽ / день</div><div class="row-sub">Сегодня потрачено 1 240 ₽ · осталось 1 250 ₽</div></div><div class="ring"><span>50%</span></div></div></section>
+        <section class="card guard"><div class="section-head"><h3>Money Guard</h3><span>1 действие</span></div><div class="guard-action"><div><strong>Защитить платёж по кредитке</strong><span>Распредели 12 000 ₽, чтобы все обязательства были закрыты.</span></div><button class="btn-small">Сделать</button></div><div class="row"><div><div class="row-title">4 операции без категории</div><div class="row-sub">после последней Excel-выгрузки</div></div><div class="row-amount blue">Проверить</div></div></section>
+        <section class="card progress-card"><div class="goal-top"><div class="goal-title"><strong>Цель №1: закрыть кредитку</strong><span>спокойная миссия вместо давления долгом</span></div><div class="goal-percent">57%</div></div><div class="bar"><div style="width:57%"></div></div><div class="goal-numbers"><div class="mini"><div class="k">Накоплено</div><div class="v">400k</div></div><div class="mini"><div class="k">Цель</div><div class="v">700k</div></div><div class="mini"><div class="k">До рубежа</div><div class="v">50k</div></div></div></section>
+        <section class="card"><div class="section-head"><h3>Постоянные расходы</h3><span>план / факт</span></div><div class="expense-grid"><div class="expense-row"><div class="name">Продукты</div><div class="thinbar warn"><div style="width:31%"></div></div><div class="rest">41 600 ₽</div></div><div class="expense-row"><div class="name">Подписки</div><div class="thinbar"><div style="width:64%"></div></div><div class="rest">1 800 ₽</div></div><div class="expense-row"><div class="name">Транспорт</div><div class="thinbar green"><div style="width:35%"></div></div><div class="rest">13 000 ₽</div></div></div></section>
+        <nav class="nav"><div class="nav-item active">Главная</div><div class="nav-item">Операции</div><div class="nav-item">План</div><div class="nav-item">Импорт</div></nav>
+      </div></div></div>
+      <aside class="notes">
+        <div class="note-card"><h2>Что изменилось относительно первого mock</h2><p>Главный экран теперь показывает не только свободные деньги, но и будущую финансовую нагрузку. Смысл: не дать случайно принять “баланс на карте” за доступные деньги.</p><ul class="spec-list"><li><span class="num">1</span><span>Добавлен блок <code>Ближайшие обязательства</code> с явной суммой <code>Ещё распределить</code>.</span></li><li><span class="num">2</span><span>Добавлена цель №1 по кредитке: прогресс, следующий рубеж, мягкая геймификация.</span></li><li><span class="num">3</span><span>Добавлен <code>Безопасный темп трат</code>, чтобы переводить месячный остаток в понятный дневной ориентир.</span></li><li><span class="num">4</span><span><code>Money Guard</code> даёт одно действие, а не длинный список тревожных предупреждений.</span></li></ul></div>
+        <div class="note-card"><h2>Основная формула экрана</h2><div class="formula">Свободно до следующего дохода =
+Текущий денежный баланс
+− будущие обязательные платежи
+− плановые постоянные расходы
+− защищённый резерв
+− плановый взнос в цель №1</div></div>
+        <div class="note-card"><h2>Почему это удобно для MVP</h2><p>Такой экран хорошо работает даже без банковского API: раз в неделю загружается Excel, приложение обновляет операции, категории, остатки и показывает конкретный следующий шаг.</p><ul class="spec-list"><li><span class="num">A</span><span>Первый экран не превращается в бухгалтерскую таблицу.</span></li><li><span class="num">B</span><span>Обязательные платежи отделены от бытовых расходов и свободных денег.</span></li><li><span class="num">C</span><span>Кредитка становится управляемой целью, а не фоновым источником стыда.</span></li></ul></div>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

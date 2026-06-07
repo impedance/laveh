@@ -1,6 +1,6 @@
 # Documentation Hub
 
-System-of-record map for Morgan Finance.
+System-of-record map for Денежка.
 
 ## Stack
 Vite + React 19 + TypeScript 6 + Tailwind 4 + Zustand 5 (persist) + SheetJS.

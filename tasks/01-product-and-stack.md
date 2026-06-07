@@ -1,18 +1,6 @@
-# Morgan Finance — MVP Technical Specification
+# Денежка — MVP Technical Specification
 
-**Document type:** Technical specification / implementation brief  
-**Version:** 0.2  
-**Language:** Russian, with English component/entity names  
-**Target platform:** iPhone-first PWA, desktop-compatible  
-**Initial user:** one user only  
-**Bank integration:** manual Excel import from T-Bank / Tinkoff export  
-**Primary goal:** personal financial hygiene dashboard, not a generic expense tracker
-
----
-
-## 1. Product idea
-
-Morgan Finance is a lightweight personal cashflow dashboard. The app must answer one primary question:
+Денежка is a lightweight personal cashflow dashboard. The app must answer one primary question:
 
 > **How much money is safely free until the next income, after all mandatory future payments and planned living expenses are protected?**
 

@@ -172,7 +172,7 @@ src/
 Use this prompt to start implementation:
 
 ```txt
-You are implementing Morgan Finance, a local-first iPhone PWA for personal cashflow hygiene.
+You are implementing Денежка, a local-first iPhone PWA for personal cashflow hygiene.
 
 Build a Vite + React + TypeScript app with a dark mobile-first dashboard.
 

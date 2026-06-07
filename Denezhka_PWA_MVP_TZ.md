@@ -1,4 +1,4 @@
-# Morgan Finance — MVP Technical Specification
+# Денежка — MVP Technical Specification
 
 **Document type:** Technical specification / implementation brief  
 **Version:** 0.2  
@@ -12,7 +12,7 @@
 
 ## 1. Product idea
 
-Morgan Finance is a lightweight personal cashflow dashboard. The app must answer one primary question:
+Денежка is a lightweight personal cashflow dashboard. The app must answer one primary question:
 
 > **How much money is safely free until the next income, after all mandatory future payments and planned living expenses are protected?**
 
@@ -193,7 +193,7 @@ A PWA is feasible for this MVP on iPhone, with important limitations.
 The app must support exporting all app data to JSON:
 
 ```txt
-Settings → Export backup → morgan-backup-YYYY-MM-DD.json
+Settings → Export backup → denezhka-backup-YYYY-MM-DD.json
 ```
 
 And importing it back:
@@ -1224,7 +1224,7 @@ src/
 Use this prompt to start implementation:
 
 ```txt
-You are implementing Morgan Finance, a local-first iPhone PWA for personal cashflow hygiene.
+You are implementing Денежка, a local-first iPhone PWA for personal cashflow hygiene.
 
 Build a Vite + React + TypeScript app with a dark mobile-first dashboard.
 
@@ -1279,4 +1279,4 @@ What needs attention?
 What is the next small action?
 ```
 
-That is the core UX of Morgan Finance MVP.
+That is the core UX of Денежка MVP.

@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { MorganStore, Transaction, Category, Obligation, Goal, Account, Allocation, CategorizationRule, ImportBatch } from './types';
+import type { DenezhkaStore, Transaction, Category, Obligation, Goal, Account, Allocation, CategorizationRule, ImportBatch } from './types';
 import { seedData } from './seed';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export const useStore = create<MorganStore>()(
+export const useStore = create<DenezhkaStore>()(
   persist(
     (set, get) => ({
       ...seedData,
@@ -182,7 +182,7 @@ export const useStore = create<MorganStore>()(
       },
     }),
     {
-      name: 'morgan-finance-store',
+      name: 'denezhka-store',
       partialize: (state) => ({
         accounts: state.accounts,
         transactions: state.transactions,
