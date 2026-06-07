@@ -37,10 +37,6 @@ export default function HomePage({ onTabChange }: Props) {
 
   return (
     <AppLayout>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-xs text-[rgba(238,244,248,0.72)]">21:30</div>
-        <div className="text-xs text-[rgba(238,244,248,0.72)]">●●● 82%</div>
-      </div>
       <div className="mb-[14px] flex items-center justify-between">
         <div>
           <strong className="block text-lg tracking-[-0.02em] text-[#eef4f8]">Денежка</strong>
