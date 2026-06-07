@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'path';
+import { mkdirSync, writeFileSync } from 'fs';
 
 export default defineConfig({
   plugins: [
@@ -41,6 +42,22 @@ name: 'Денежка',
         ],
       },
     }),
+    {
+      name: 'denezhka-state-dump',
+      configureServer(server) {
+        server.middlewares.use('/__denezhka_state', (req, res) => {
+          if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+          let body = '';
+          req.on('data', (chunk) => (body += chunk));
+          req.on('end', () => {
+            const dir = path.resolve(__dirname, 'data');
+            mkdirSync(dir, { recursive: true });
+            writeFileSync(path.join(dir, 'state.json'), body, 'utf-8');
+            res.end('ok');
+          });
+        });
+      },
+    },
   ],
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
 });
