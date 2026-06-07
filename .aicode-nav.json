@@ -1,0 +1,40 @@
+{
+  "excluded_dirs": [
+    ".git",
+    ".hg",
+    ".svn",
+    "node_modules",
+    "dist",
+    "build",
+    ".venv",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".next",
+    ".turbo",
+    ".idea",
+    ".vscode",
+    "coverage",
+    "output",
+    "target"
+  ],
+  "groups": [
+    { "name": "src", "globs": ["src/**", "packages/*/src/**", "services/*/src/**", "apps/*/src/**", "lib/**"] },
+    { "name": "templates", "globs": ["templates/**"] },
+    { "name": "filters", "globs": ["filters/**"] },
+    { "name": "scripts", "globs": ["scripts/**", ".aicode/**", "tools/aicode/**"] },
+    { "name": "docs", "globs": ["docs/**"] },
+    { "name": "tests", "globs": ["tests/**"] }
+  ],
+  "nav": {
+    "include_note_nav_tag": true,
+    "include_groups": ["src", "templates", "filters", "scripts"],
+    "limit_default": 20,
+    "compactness_target": 20
+  },
+  "telemetry": {
+    "path_default": "output/aicode-nav.telemetry.jsonl",
+    "enabled_by_default": true
+  }
+}
