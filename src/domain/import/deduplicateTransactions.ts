@@ -1,9 +1,5 @@
 import type { Transaction } from '../../store/types';
-
-export interface DedupResult {
-  new: Transaction[];
-  duplicates: Transaction[];
-}
+import type { DedupResult } from './types';
 
 export function deduplicateTransactions(
   newTxns: Transaction[],

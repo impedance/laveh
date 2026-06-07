@@ -1,5 +1,5 @@
 import type { Account, Obligation, Allocation, Goal, Category, ImportBatch } from '../../store/types';
-import type { DashboardInput, DashboardViewModel, Mode, FreeMoneyView, ObligationsView, SafeDailyPaceView, MoneyGuardView, PrimaryGoalView, RecurringExpensesView } from './types';
+import type { DashboardInput, DashboardViewModel, Mode, FreeMoneyView, ObligationsView, ObligationItemView, SafeDailyPaceView, MoneyGuardView, MoneyGuardAction, PrimaryGoalView, RecurringExpensesView } from './types';
 import { daysBetween, formatDate } from '../money/dateUtils';
 import { formatMoney } from '../money/formatMoney';
 
@@ -18,7 +18,7 @@ function computeObligationGaps(
     (o) => !nextIncomeDate || o.dueDate <= nextIncomeDate,
   );
 
-  const items: ObligationsView['items'] = [];
+  const items: ObligationItemView[] = [];
   let totalNeeded = 0;
   let alreadyAllocated = 0;
 
@@ -116,7 +116,7 @@ function computeSafeDailyPace(
 }
 
 function computeMoneyGuardView(
-  obligations: ObligationsView['items'],
+  obligations: ObligationItemView[],
   importBatches: ImportBatch[],
   freeAmount: number,
   mode: Mode,
@@ -124,7 +124,7 @@ function computeMoneyGuardView(
 ): MoneyGuardView {
   const warnItem = obligations.find((o) => o.type === 'warn');
 
-  let action: { title: string; description: string } | null = null;
+  let action: MoneyGuardAction | null = null;
 
   if (warnItem) {
     action = {

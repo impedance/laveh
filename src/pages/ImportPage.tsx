@@ -59,7 +59,6 @@ export default function ImportPage({ onTabChange }: Props) {
     if (pendingTxns.length === 0) return;
     setStep('importing');
     store.commitImport(pendingTxns, {
-      id: '',
       date: new Date().toISOString().slice(0, 10),
       filename,
       transactionCount: pendingTxns.length,

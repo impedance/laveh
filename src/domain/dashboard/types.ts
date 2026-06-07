@@ -28,18 +28,20 @@ export interface FreeMoneyView {
   lastImport: string;
 }
 
+export interface ObligationItemView {
+  title: string;
+  date: string;
+  status: string;
+  amount: number;
+  type: 'ok' | 'warn';
+}
+
 export interface ObligationsView {
   period: string;
   remainingToAllocate: number;
   totalNeeded: number;
   alreadyAllocated: number;
-  items: Array<{
-    title: string;
-    date: string;
-    status: string;
-    amount: number;
-    type: 'ok' | 'warn';
-  }>;
+  items: ObligationItemView[];
 }
 
 export interface SafeDailyPaceView {
@@ -49,9 +51,14 @@ export interface SafeDailyPaceView {
   percentUsed: number;
 }
 
+export interface MoneyGuardAction {
+  title: string;
+  description: string;
+}
+
 export interface MoneyGuardView {
   actionCount: number;
-  action: { title: string; description: string };
+  action: MoneyGuardAction;
   uncategorized: { count: number; label: string };
 }
 
@@ -64,13 +71,15 @@ export interface PrimaryGoalView {
   nextMilestone: number;
 }
 
+export interface RecurringExpenseItemView {
+  name: string;
+  percent: number;
+  amount: number;
+  type?: 'warn' | 'green';
+}
+
 export interface RecurringExpensesView {
-  items: Array<{
-    name: string;
-    percent: number;
-    amount: number;
-    type?: 'warn' | 'green';
-  }>;
+  items: RecurringExpenseItemView[];
 }
 
 export interface DashboardViewModel {
