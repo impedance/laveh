@@ -16,6 +16,7 @@ interface Props {
 export default function OperationsPage({ onTabChange }: Props) {
   const transactions = useStore((s) => s.transactions);
   const categories = useStore((s) => s.categories);
+  const categoryGroups = useStore((s) => s.categoryGroups);
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -73,9 +74,18 @@ export default function OperationsPage({ onTabChange }: Props) {
             className="rounded-xl bg-[#171f2a] px-3 py-2 text-sm text-[#eef4f8]"
           >
             <option value="">Все категории</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
+            {[...categoryGroups]
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((group) => (
+                <optgroup key={group.id} label={group.name}>
+                  {categories
+                    .filter((c) => c.groupId === group.id)
+                    .sort((a, b) => a.sortOrder - b.sortOrder)
+                    .map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                </optgroup>
+              ))}
           </select>
           <label className="flex items-center gap-2 text-sm text-[#8795a5]">
             <input

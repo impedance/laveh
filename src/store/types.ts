@@ -4,6 +4,7 @@ export interface Account {
   type: 'debit' | 'credit';
   includeInCashBalance: boolean;
   currentBalance: number;
+  creditLimit?: number;
 }
 
 export interface Transaction {
@@ -40,36 +41,18 @@ export interface Transaction {
   operationAmount?: number;
 }
 
+export interface CategoryGroup {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
+
 export interface Category {
   id: string;
   name: string;
   plan: number;
-  type: 'living' | 'savings' | 'obligation';
-}
-
-export interface Obligation {
-  id: string;
-  title: string;
-  amount: number;
-  dueDate: string;
-  isProtected: boolean;
-  categoryId?: string;
-}
-
-export interface Allocation {
-  id: string;
-  obligationId: string;
-  amount: number;
-  date: string;
-}
-
-export interface Goal {
-  id: string;
-  title: string;
-  type: 'debt_payoff' | 'savings';
-  targetAmount: number;
-  currentAmount: number;
-  isPrimary: boolean;
+  groupId: string;
+  sortOrder: number;
 }
 
 export interface ImportBatch {
@@ -101,9 +84,7 @@ export interface StoreState {
   accounts: Account[];
   transactions: Transaction[];
   categories: Category[];
-  obligations: Obligation[];
-  allocations: Allocation[];
-  goals: Goal[];
+  categoryGroups: CategoryGroup[];
   importBatches: ImportBatch[];
   rules: CategorizationRule[];
   bankMappings: BankMapping[];
@@ -125,20 +106,16 @@ export interface StoreActions {
   updateTransactionCategory: (id: string, categoryId: string) => void;
   addRule: (rule: Omit<CategorizationRule, 'id'>) => void;
   toggleRuleActive: (id: string, active: boolean) => void;
-  upsertObligation: (obligation: Omit<Obligation, 'id'> & { id?: string }) => void;
-  deleteObligation: (id: string) => void;
-  upsertCategory: (category: Omit<Category, 'id'> & { id?: string }) => void;
+  upsertCategory: (category: Omit<Category, 'id' | 'sortOrder'> & { id?: string }) => void;
   deleteCategory: (id: string) => void;
-  setGoalProgress: (id: string, currentAmount: number) => void;
-  addGoal: (goal: Omit<Goal, 'id'>) => void;
-  updateGoal: (id: string, updates: Partial<Goal>) => void;
-  deleteGoal: (id: string) => void;
   addAccount: (account: Omit<Account, 'id'>) => void;
   updateAccount: (id: string, updates: Partial<Account>) => void;
   deleteAccount: (id: string) => void;
-  addAllocation: (allocation: Omit<Allocation, 'id'>) => void;
-  deleteAllocation: (id: string) => void;
   learnBankMapping: (bankCategory: string, categoryId: string) => void;
+  upsertGroup: (group: Omit<CategoryGroup, 'id' | 'sortOrder'> & { id?: string }) => void;
+  deleteGroup: (id: string) => void;
+  reorderGroups: (ids: string[]) => void;
+  moveCategoryToGroup: (categoryId: string, groupId: string) => void;
 }
 
 export type DenezhkaStore = StoreState & StoreActions;

@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from '../index';
+import { seedData } from '../seed';
 
 function resetStore() {
   useStore.setState({
     accounts: [],
     transactions: [],
     categories: [],
-    obligations: [],
-    allocations: [],
-    goals: [],
+    categoryGroups: seedData.categoryGroups,
     importBatches: [],
     rules: [],
     nextIncomeDate: '',
@@ -35,9 +34,6 @@ describe('Zustand store', () => {
     expect(keys).toContain('accounts');
     expect(keys).toContain('transactions');
     expect(keys).toContain('categories');
-    expect(keys).toContain('obligations');
-    expect(keys).toContain('allocations');
-    expect(keys).toContain('goals');
     expect(keys).toContain('importBatches');
     expect(keys).toContain('rules');
     expect(keys).toContain('nextIncomeDate');
@@ -49,14 +45,9 @@ describe('Zustand store', () => {
     expect(keys).toContain('setExpectedMonthlyIncome');
     expect(keys).toContain('setTodayFlexibleSpent');
     expect(keys).toContain('restoreFromJSON');
-    expect(keys).toContain('addGoal');
-    expect(keys).toContain('updateGoal');
-    expect(keys).toContain('deleteGoal');
     expect(keys).toContain('addAccount');
     expect(keys).toContain('updateAccount');
     expect(keys).toContain('deleteAccount');
-    expect(keys).toContain('addAllocation');
-    expect(keys).toContain('deleteAllocation');
   });
 
   it('returns JSON-serializable state', () => {
@@ -91,7 +82,7 @@ describe('Zustand store', () => {
 
   it('updates a category', () => {
     useStore.setState({
-      categories: [{ id: 'cat-1', name: 'Продукты', plan: 60000, type: 'living' }],
+      categories: [{ id: 'cat-1', name: 'Продукты', plan: 60000, groupId: 'group-obligatory', sortOrder: 0 }],
     });
     useStore.getState().updateCategory('cat-1', { plan: 999 });
     expect(useStore.getState().categories.find((c) => c.id === 'cat-1')?.plan).toBe(999);
@@ -107,9 +98,6 @@ describe('Zustand store', () => {
       accounts: [{ id: 'a1', name: 'Test', type: 'debit', includeInCashBalance: true, currentBalance: 50000 }],
       transactions: [],
       categories: [],
-      obligations: [],
-      allocations: [],
-      goals: [],
       importBatches: [],
       rules: [],
       nextIncomeDate: '2026-07-01',
@@ -131,57 +119,28 @@ describe('Zustand store', () => {
     expect(useStore.getState().nextIncomeDate).toBe('2026-06-25');
   });
 
-  it('adds a goal and reads it back', () => {
-    useStore.getState().addGoal({
-      title: 'Test Goal',
-      type: 'savings',
-      targetAmount: 100000,
-      currentAmount: 0,
-      isPrimary: false,
-    });
-    const s = useStore.getState();
-    expect(s.goals).toHaveLength(1);
-    expect(s.goals[0].title).toBe('Test Goal');
-    expect(s.goals[0].id).toBeDefined();
-  });
-
-  it('updates a goal', () => {
-    useStore.setState({
-      goals: [{ id: 'g1', title: 'Old', type: 'savings', targetAmount: 100, currentAmount: 0, isPrimary: false }],
-    });
-    useStore.getState().updateGoal('g1', { title: 'Updated', targetAmount: 200 });
-    const g = useStore.getState().goals[0];
-    expect(g.title).toBe('Updated');
-    expect(g.targetAmount).toBe(200);
-  });
-
-  it('deletes a goal', () => {
-    useStore.setState({
-      goals: [{ id: 'g1', title: 'X', type: 'savings', targetAmount: 100, currentAmount: 0, isPrimary: false }],
-    });
-    useStore.getState().deleteGoal('g1');
-    expect(useStore.getState().goals).toHaveLength(0);
-  });
-
-  it('adds an account', () => {
+  it('adds an account with creditLimit', () => {
     useStore.getState().addAccount({
       name: 'Credit Card',
       type: 'credit',
-      includeInCashBalance: false,
+      includeInCashBalance: true,
       currentBalance: -5000,
+      creditLimit: 500000,
     });
     const s = useStore.getState();
     expect(s.accounts).toHaveLength(1);
     expect(s.accounts[0].name).toBe('Credit Card');
+    expect(s.accounts[0].creditLimit).toBe(500000);
     expect(s.accounts[0].id).toBeDefined();
   });
 
   it('updates an account', () => {
     useStore.setState({
-      accounts: [{ id: 'a1', name: 'Old', type: 'debit', includeInCashBalance: true, currentBalance: 1000 }],
+      accounts: [{ id: 'a1', name: 'Old', type: 'credit', includeInCashBalance: true, currentBalance: 1000 }],
     });
-    useStore.getState().updateAccount('a1', { currentBalance: 5000 });
+    useStore.getState().updateAccount('a1', { currentBalance: 5000, creditLimit: 10000 });
     expect(useStore.getState().accounts[0].currentBalance).toBe(5000);
+    expect(useStore.getState().accounts[0].creditLimit).toBe(10000);
   });
 
   it('deletes an account and its transactions', () => {
@@ -196,26 +155,6 @@ describe('Zustand store', () => {
     expect(useStore.getState().accounts).toHaveLength(0);
     expect(useStore.getState().transactions).toHaveLength(1);
     expect(useStore.getState().transactions[0].id).toBe('tx2');
-  });
-
-  it('adds an allocation', () => {
-    useStore.getState().addAllocation({
-      obligationId: 'obl-1',
-      amount: 5000,
-      date: '2026-06-07',
-    });
-    const s = useStore.getState();
-    expect(s.allocations).toHaveLength(1);
-    expect(s.allocations[0].amount).toBe(5000);
-    expect(s.allocations[0].id).toBeDefined();
-  });
-
-  it('deletes an allocation', () => {
-    useStore.setState({
-      allocations: [{ id: 'a1', obligationId: 'obl-1', amount: 100, date: '2026-01-01' }],
-    });
-    useStore.getState().deleteAllocation('a1');
-    expect(useStore.getState().allocations).toHaveLength(0);
   });
 
   it('commitImport generates its own batch id', () => {
@@ -237,5 +176,67 @@ describe('Zustand store', () => {
     expect(s.importBatches[0].id).toBeDefined();
     expect(s.importBatches[0].filename).toBe('test.xlsx');
     expect(s.transactions[0].importBatchId).toBe(s.importBatches[0].id);
+  });
+
+  it('upsertGroup creates a new group', () => {
+    useStore.getState().upsertGroup({ name: 'Test Group' });
+    const groups = useStore.getState().categoryGroups;
+    const created = groups.find((g) => g.name === 'Test Group');
+    expect(created).toBeDefined();
+    expect(created!.id).toBeDefined();
+  });
+
+  it('upsertGroup updates an existing group', () => {
+    useStore.getState().upsertGroup({ id: 'group-obligatory', name: 'Обязательные изменённые' });
+    const g = useStore.getState().categoryGroups.find((g) => g.id === 'group-obligatory');
+    expect(g?.name).toBe('Обязательные изменённые');
+  });
+
+  it('deleteGroup cascades to categories, transactions, bankMappings, rules', () => {
+    useStore.setState({
+      categoryGroups: [
+        { id: 'g1', name: 'Group 1', sortOrder: 0 },
+        { id: 'g2', name: 'Group 2', sortOrder: 1 },
+      ],
+      categories: [
+        { id: 'cat-1', name: 'A', plan: 100, groupId: 'g1', sortOrder: 0 },
+        { id: 'cat-2', name: 'B', plan: 200, groupId: 'g2', sortOrder: 0 },
+      ],
+      transactions: [
+        { id: 'tx1', date: '2026-01-01', description: 'T1', amount: 50, accountId: 'a1', categoryId: 'cat-1' },
+        { id: 'tx2', date: '2026-01-01', description: 'T2', amount: 50, accountId: 'a1', categoryId: 'cat-2' },
+      ],
+      bankMappings: [
+        { id: 'm1', bankCategory: 'X', categoryId: 'cat-1', hitCount: 2 },
+      ],
+      rules: [
+        { id: 'r1', pattern: 'X', categoryId: 'cat-1', priority: 0, matchType: 'contains', matchField: 'description' },
+        { id: 'r2', pattern: 'Y', categoryId: 'cat-2', priority: 1, matchType: 'contains', matchField: 'description' },
+      ],
+    });
+    useStore.getState().deleteGroup('g1');
+    const state = useStore.getState();
+    expect(state.categoryGroups).toHaveLength(1);
+    expect(state.categoryGroups[0].id).toBe('g2');
+    expect(state.categories).toHaveLength(1);
+    expect(state.categories[0].id).toBe('cat-2');
+    expect(state.transactions.find((t) => t.id === 'tx1')?.categoryId).toBeUndefined();
+    expect(state.transactions.find((t) => t.id === 'tx2')?.categoryId).toBe('cat-2');
+    expect(state.bankMappings).toHaveLength(0);
+    expect(state.rules).toHaveLength(1);
+    expect(state.rules[0].id).toBe('r2');
+  });
+
+  it('moveCategoryToGroup changes groupId', () => {
+    useStore.setState({
+      categories: [{ id: 'cat-1', name: 'X', plan: 100, groupId: 'g1', sortOrder: 0 }],
+    });
+    useStore.getState().moveCategoryToGroup('cat-1', 'g2');
+    expect(useStore.getState().categories[0].groupId).toBe('g2');
+  });
+
+  it('restoreFromJSON handles missing categoryGroups', () => {
+    useStore.getState().restoreFromJSON(JSON.stringify({ accounts: [] }));
+    expect(useStore.getState().categoryGroups).toEqual(seedData.categoryGroups);
   });
 });

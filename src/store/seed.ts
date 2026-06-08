@@ -6,22 +6,16 @@ export const seedData: StoreState = {
   ],
   transactions: [],
   categories: [
-    { id: 'cat-1', name: 'Продукты', plan: 60000, type: 'living' },
-    { id: 'cat-2', name: 'Подписки', plan: 5000, type: 'living' },
-    { id: 'cat-3', name: 'Транспорт', plan: 20000, type: 'living' },
+    { id: 'cat-1', name: 'Продукты', plan: 60000, groupId: 'group-obligatory', sortOrder: 0 },
+    { id: 'cat-2', name: 'Подписки', plan: 5000, groupId: 'group-regular', sortOrder: 0 },
+    { id: 'cat-3', name: 'Транспорт', plan: 20000, groupId: 'group-regular', sortOrder: 1 },
   ],
-  obligations: [
-    { id: 'obl-1', title: 'Ипотека', amount: 84000, dueDate: '2026-06-10', isProtected: true },
-    { id: 'obl-2', title: 'Автокредит', amount: 34000, dueDate: '2026-06-15', isProtected: true },
-    { id: 'obl-3', title: 'Кредитка · платёж месяца', amount: 30000, dueDate: '2026-06-20', isProtected: false },
-  ],
-  allocations: [
-    { id: 'alloc-1', obligationId: 'obl-1', amount: 84000, date: '2026-06-01' },
-    { id: 'alloc-2', obligationId: 'obl-2', amount: 34000, date: '2026-06-01' },
-    { id: 'alloc-3', obligationId: 'obl-3', amount: 18000, date: '2026-06-01' },
-  ],
-  goals: [
-    { id: 'goal-1', title: 'Закрыть кредитку', type: 'debt_payoff', targetAmount: 700000, currentAmount: 400000, isPrimary: true },
+  categoryGroups: [
+    { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0 },
+    { id: 'group-regular', name: 'Регулярные', sortOrder: 1 },
+    { id: 'group-fun', name: 'Отдых', sortOrder: 2 },
+    { id: 'group-reserves', name: 'Резервы', sortOrder: 3 },
+    { id: 'group-debts', name: 'Долги', sortOrder: 4 },
   ],
   importBatches: [],
   bankMappings: [],

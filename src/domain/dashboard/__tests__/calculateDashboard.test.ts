@@ -9,22 +9,16 @@ const baseInput: DashboardInput = {
   ],
   transactions: [],
   categories: [
-    { id: 'cat-1', name: 'Продукты', plan: 60000, type: 'living' },
-    { id: 'cat-2', name: 'Подписки', plan: 5000, type: 'living' },
-    { id: 'cat-3', name: 'Транспорт', plan: 20000, type: 'living' },
+    { id: 'cat-1', name: 'Продукты', plan: 60000, groupId: 'group-obligatory', sortOrder: 0 },
+    { id: 'cat-2', name: 'Подписки', plan: 5000, groupId: 'group-regular', sortOrder: 0 },
+    { id: 'cat-3', name: 'Транспорт', plan: 20000, groupId: 'group-regular', sortOrder: 1 },
   ],
-  obligations: [
-    { id: 'obl-1', title: 'Ипотека', amount: 84000, dueDate: '2026-06-10', isProtected: true },
-    { id: 'obl-2', title: 'Автокредит', amount: 34000, dueDate: '2026-06-15', isProtected: true },
-    { id: 'obl-3', title: 'Кредитка', amount: 30000, dueDate: '2026-06-20', isProtected: false },
-  ],
-  allocations: [
-    { id: 'alloc-1', obligationId: 'obl-1', amount: 84000, date: '2026-06-01' },
-    { id: 'alloc-2', obligationId: 'obl-2', amount: 34000, date: '2026-06-01' },
-    { id: 'alloc-3', obligationId: 'obl-3', amount: 18000, date: '2026-06-01' },
-  ],
-  goals: [
-    { id: 'goal-1', title: 'Закрыть кредитку', type: 'debt_payoff', targetAmount: 700000, currentAmount: 400000, isPrimary: true },
+  categoryGroups: [
+    { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0 },
+    { id: 'group-regular', name: 'Регулярные', sortOrder: 1 },
+    { id: 'group-fun', name: 'Отдых', sortOrder: 2 },
+    { id: 'group-reserves', name: 'Резервы', sortOrder: 3 },
+    { id: 'group-debts', name: 'Долги', sortOrder: 4 },
   ],
   importBatches: [],
   rules: [],
@@ -35,16 +29,18 @@ const baseInput: DashboardInput = {
 };
 
 describe('calculateDashboard', () => {
-  it('freeUntilNextIncome = cashBalance - totalRequiredAllocations', () => {
+  it('freeUntilNextIncome = cashBalance - proportionalLiving', () => {
     const result = calculateDashboard(baseInput);
     const cashBalance = 212000;
-    const expectedFree = result.freeMoney.amount;
+    const totalPlan = 60000 + 5000 + 20000;
+    const daysToIncome = 18;
+    const monthFraction = daysToIncome / 30;
+    const expectedProportional = Math.round(totalPlan * monthFraction);
     expect(result.freeMoney.balanceNow).toBe(cashBalance);
-    expect(expectedFree).toBeGreaterThan(0);
-    expect(result.freeMoney.amount).toBe(cashBalance - result.freeMoney.distributed);
+    expect(result.freeMoney.amount).toBe(cashBalance - expectedProportional);
   });
 
-  it('credit account excluded from cash balance', () => {
+  it('credit account without creditLimit contributes 0 to cash balance', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
@@ -56,90 +52,50 @@ describe('calculateDashboard', () => {
     expect(result.freeMoney.balanceNow).toBe(100000);
   });
 
-  it('mode = stop when freeMoney < 0', () => {
+  it('credit account with creditLimit contributes available funds to cash balance', () => {
     const input: DashboardInput = {
       ...baseInput,
-      accounts: [{ id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 1000 }],
-      obligations: [
-        { id: 'obl-1', title: 'Долг', amount: 50000, dueDate: '2026-06-10', isProtected: false },
-      ],
-      allocations: [],
-      categories: [],
-      goals: [],
-    };
-    const result = calculateDashboard(input);
-    expect(result.freeMoney.mode).toBe('стоп');
-  });
-
-  it('mode = calm when incomeRatio > 0.2', () => {
-    const input: DashboardInput = {
-      ...baseInput,
-      obligations: [],
-      allocations: [],
-      categories: [],
-      goals: [],
-      accounts: [{ id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 }],
-      expectedMonthlyIncome: 100000,
-    };
-    const result = calculateDashboard(input);
-    expect(result.freeMoney.mode).toBe('спокойно');
-  });
-
-  it('mode = caution when incomeRatio between 0 and 0.2', () => {
-    const input: DashboardInput = {
-      ...baseInput,
-      obligations: [],
-      allocations: [],
-      categories: [],
-      goals: [],
-      accounts: [{ id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 10000 }],
-      expectedMonthlyIncome: 100000,
-    };
-    const result = calculateDashboard(input);
-    expect(result.freeMoney.mode).toBe('внимание');
-  });
-
-  it('safeDailyPace = 0 when daysUntilIncome = 0', () => {
-    const input: DashboardInput = {
-      ...baseInput,
-      nextIncomeDate: '2026-06-07',
-      today: '2026-06-07',
-      obligations: [],
-      allocations: [],
-      categories: [],
-      goals: [],
-      accounts: [{ id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100 }],
-    };
-    const result = calculateDashboard(input);
-    expect(result.safeDailyPace.perDay).toBe(0);
-  });
-
-  it('obligation gap = plannedAmount - allocatedAmount', () => {
-    const result = calculateDashboard(baseInput);
-    const creditCardObl = result.obligations.items.find((o) => o.title === 'Кредитка');
-    expect(creditCardObl).toBeDefined();
-    expect(creditCardObl!.type).toBe('warn');
-  });
-
-  it('obligation gap = 0 when allocatedAmount >= plannedAmount', () => {
-    const input: DashboardInput = {
-      ...baseInput,
-      allocations: [
-        { id: 'alloc-1', obligationId: 'obl-3', amount: 30000, date: '2026-06-01' },
+      accounts: [
+        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: -300000, creditLimit: 500000 },
       ],
     };
     const result = calculateDashboard(input);
-    const creditCardObl = result.obligations.items.find((o) => o.title === 'Кредитка');
-    expect(creditCardObl).toBeDefined();
-    expect(creditCardObl!.type).toBe('ok');
+    expect(result.freeMoney.balanceNow).toBe(100000 + 200000);
+    expect(result.freeMoney.creditAvailable).toBe(200000);
   });
 
-  it('primaryGoal progress = current / target', () => {
+  it('credit account over limit contributes 0', () => {
+    const input: DashboardInput = {
+      ...baseInput,
+      accounts: [
+        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: -550000, creditLimit: 500000 },
+      ],
+    };
+    const result = calculateDashboard(input);
+    expect(result.freeMoney.balanceNow).toBe(100000);
+    expect(result.freeMoney.creditAvailable).toBe(0);
+  });
+
+  it('spendingGroups has correct grouping and totalPlan', () => {
     const result = calculateDashboard(baseInput);
-    expect(result.primaryGoal.percent).toBe(57);
-    expect(result.primaryGoal.accumulated).toBe(400000);
-    expect(result.primaryGoal.target).toBe(700000);
+    expect(result.spendingGroups).toHaveLength(2);
+    const obligatory = result.spendingGroups.find((g) => g.id === 'group-obligatory');
+    expect(obligatory).toBeDefined();
+    expect(obligatory!.categories).toHaveLength(1);
+    expect(obligatory!.categories[0].name).toBe('Продукты');
+    expect(obligatory!.totalPlan).toBe(60000);
+    const regular = result.spendingGroups.find((g) => g.id === 'group-regular');
+    expect(regular).toBeDefined();
+    expect(regular!.categories).toHaveLength(2);
+    expect(regular!.totalPlan).toBe(25000);
   });
 
-
+  it('spendingGroups hides groups with no categories', () => {
+    const result = calculateDashboard(baseInput);
+    expect(result.spendingGroups.find((g) => g.id === 'group-fun')).toBeUndefined();
+    expect(result.spendingGroups.find((g) => g.id === 'group-reserves')).toBeUndefined();
+    expect(result.spendingGroups.find((g) => g.id === 'group-debts')).toBeUndefined();
+  });
 });

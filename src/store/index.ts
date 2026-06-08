@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DenezhkaStore, Transaction, Category, Obligation, Goal, Account, Allocation, CategorizationRule, ImportBatch, BankMapping } from './types';
+import type { DenezhkaStore, Transaction, Category, CategoryGroup, Account, CategorizationRule, ImportBatch, BankMapping } from './types';
 import { seedData } from './seed';
 import { normalizeDateField } from '../domain/import/excelDate';
 import { applyRules } from '../domain/categorization/applyRules';
@@ -123,26 +123,6 @@ export const useStore = create<DenezhkaStore>()(
         });
       },
 
-      upsertObligation: (obligation: Omit<Obligation, 'id'> & { id?: string }) => {
-        if (obligation.id) {
-          set({
-            obligations: get().obligations.map((o) =>
-              o.id === obligation.id ? { ...o, ...obligation } : o,
-            ),
-          });
-        } else {
-          const newObl: Obligation = { ...obligation, id: generateId() } as Obligation;
-          set({ obligations: [...get().obligations, newObl] });
-        }
-      },
-
-      deleteObligation: (id: string) => {
-        set({
-          obligations: get().obligations.filter((o) => o.id !== id),
-          allocations: get().allocations.filter((a) => a.obligationId !== id),
-        });
-      },
-
       deleteCategory: (id: string) => {
         set({
           categories: get().categories.filter((c) => c.id !== id),
@@ -156,42 +136,20 @@ export const useStore = create<DenezhkaStore>()(
         });
       },
 
-      upsertCategory: (category: Omit<Category, 'id'> & { id?: string }) => {
+      upsertCategory: (category: Omit<Category, 'id' | 'sortOrder'> & { id?: string }) => {
         if (category.id) {
+          const { id, ...updates } = category as { id: string } & Partial<Category>;
           set({
             categories: get().categories.map((c) =>
-              c.id === category.id ? { ...c, ...category } : c,
+              c.id === id ? { ...c, ...updates } : c,
             ),
           });
         } else {
-          const newCat: Category = { ...category, id: generateId() } as Category;
+          const catsInGroup = get().categories.filter((c) => c.groupId === category.groupId);
+          const maxSort = catsInGroup.reduce((max, c) => Math.max(max, c.sortOrder), -1);
+          const newCat: Category = { ...category, id: generateId(), sortOrder: maxSort + 1 } as Category;
           set({ categories: [...get().categories, newCat] });
         }
-      },
-
-      setGoalProgress: (id: string, currentAmount: number) => {
-        set({
-          goals: get().goals.map((g) =>
-            g.id === id ? { ...g, currentAmount } : g,
-          ),
-        });
-      },
-
-      addGoal: (goal: Omit<Goal, 'id'>) => {
-        const newGoal: Goal = { ...goal, id: generateId() };
-        set({ goals: [...get().goals, newGoal] });
-      },
-
-      updateGoal: (id: string, updates: Partial<Goal>) => {
-        set({
-          goals: get().goals.map((g) =>
-            g.id === id ? { ...g, ...updates } : g,
-          ),
-        });
-      },
-
-      deleteGoal: (id: string) => {
-        set({ goals: get().goals.filter((g) => g.id !== id) });
       },
 
       addAccount: (account: Omit<Account, 'id'>) => {
@@ -214,13 +172,51 @@ export const useStore = create<DenezhkaStore>()(
         });
       },
 
-      addAllocation: (allocation: Omit<Allocation, 'id'>) => {
-        const newAlloc: Allocation = { ...allocation, id: generateId() };
-        set({ allocations: [...get().allocations, newAlloc] });
+      upsertGroup: (group: Omit<CategoryGroup, 'id' | 'sortOrder'> & { id?: string }) => {
+        if (group.id) {
+          const { id, ...updates } = group as { id: string } & Partial<CategoryGroup>;
+          set({
+            categoryGroups: get().categoryGroups.map((g) =>
+              g.id === id ? { ...g, ...updates } : g,
+            ),
+          });
+        } else {
+          const maxSort = get().categoryGroups.reduce((max, g) => Math.max(max, g.sortOrder), -1);
+          const newGroup: CategoryGroup = { ...group, id: generateId(), sortOrder: maxSort + 1 } as CategoryGroup;
+          set({ categoryGroups: [...get().categoryGroups, newGroup] });
+        }
       },
 
-      deleteAllocation: (id: string) => {
-        set({ allocations: get().allocations.filter((a) => a.id !== id) });
+      deleteGroup: (id: string) => {
+        const catIds = get().categories.filter((c) => c.groupId === id).map((c) => c.id);
+        set({
+          categoryGroups: get().categoryGroups.filter((g) => g.id !== id),
+          categories: get().categories.filter((c) => c.groupId !== id),
+          transactions: get().transactions.map((t) =>
+            catIds.includes(t.categoryId ?? '') ? { ...t, categoryId: undefined } : t,
+          ),
+          bankMappings: get().bankMappings.filter((m) => !catIds.includes(m.categoryId)),
+          rules: get().rules
+            .filter((r) => !catIds.includes(r.categoryId))
+            .map((r, i) => ({ ...r, priority: i })),
+        });
+      },
+
+      reorderGroups: (ids: string[]) => {
+        set({
+          categoryGroups: get().categoryGroups.map((g) => ({
+            ...g,
+            sortOrder: ids.indexOf(g.id),
+          })),
+        });
+      },
+
+      moveCategoryToGroup: (categoryId: string, groupId: string) => {
+        set({
+          categories: get().categories.map((c) =>
+            c.id === categoryId ? { ...c, groupId } : c,
+          ),
+        });
       },
 
       restoreFromJSON: (json: string) => {
@@ -229,9 +225,7 @@ export const useStore = create<DenezhkaStore>()(
           accounts: parsed.accounts ?? [],
           transactions: parsed.transactions ?? [],
           categories: parsed.categories ?? [],
-          obligations: parsed.obligations ?? [],
-          allocations: parsed.allocations ?? [],
-          goals: parsed.goals ?? [],
+          categoryGroups: parsed.categoryGroups ?? seedData.categoryGroups,
           importBatches: parsed.importBatches ?? [],
           rules: parsed.rules ?? [],
           bankMappings: parsed.bankMappings ?? [],
@@ -243,7 +237,7 @@ export const useStore = create<DenezhkaStore>()(
     }),
     {
       name: 'denezhka-store',
-      version: 2,
+      version: 3,
       migrate: (state: unknown, version: number) => {
         const s = state as Record<string, unknown>;
         if (version < 1 && Array.isArray(s.transactions)) {
@@ -288,15 +282,37 @@ export const useStore = create<DenezhkaStore>()(
           }
           s.bankMappings = mappings;
         }
+        if (version < 3) {
+          s.categoryGroups = [
+            { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0 },
+            { id: 'group-regular', name: 'Регулярные', sortOrder: 1 },
+            { id: 'group-fun', name: 'Отдых', sortOrder: 2 },
+            { id: 'group-reserves', name: 'Резервы', sortOrder: 3 },
+            { id: 'group-debts', name: 'Долги', sortOrder: 4 },
+          ];
+          if (Array.isArray(s.categories)) {
+            const typeToGroup: Record<string, string> = {
+              living: 'group-regular',
+              savings: 'group-reserves',
+              obligation: 'group-debts',
+            };
+            s.categories = (s.categories as Array<Record<string, unknown>>).map((cat, idx) => {
+              const { type, ...rest } = cat;
+              return {
+                ...rest,
+                groupId: typeToGroup[String(type ?? '')] ?? 'group-regular',
+                sortOrder: idx,
+              };
+            });
+          }
+        }
         return s as unknown as typeof seedData;
       },
       partialize: (state) => ({
         accounts: state.accounts,
         transactions: state.transactions,
         categories: state.categories,
-        obligations: state.obligations,
-        allocations: state.allocations,
-        goals: state.goals,
+        categoryGroups: state.categoryGroups,
         importBatches: state.importBatches,
         rules: state.rules,
         bankMappings: state.bankMappings,
