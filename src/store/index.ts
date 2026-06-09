@@ -236,7 +236,7 @@ export const useStore = create<DenezhkaStore>()(
       },
     }),
     {
-      name: 'denezhka-store',
+      name: 'laveh-store',
       version: 3,
       migrate: (state: unknown, version: number) => {
         const s = state as Record<string, unknown>;

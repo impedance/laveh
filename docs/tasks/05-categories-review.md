@@ -1,5 +1,7 @@
 # Work Plan: Phase 5 — Categories, Review Queue, Operations & Plan Screens
 
+> **Status: Done**
+
 ## 0) Orientation
 - Read: `tasks/04-import-and-screens.md` §13-15 (categorization rules, Operations screen, Plan screen, review queue), `tasks/03-data-and-calculations.md` §11 (Category, CategorizationRule types)
 - Anchor context: `docs/index.md` → Core domain: `src/domain/categorization/applyRules.ts`, Pages: `src/pages/OperationsPage.tsx`, `src/pages/PlanPage.tsx`

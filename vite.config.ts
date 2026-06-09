@@ -5,13 +5,14 @@ import path from 'path';
 import { mkdirSync, writeFileSync } from 'fs';
 
 export default defineConfig({
+  base: '/laveh/',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-name: 'Денежка',
-    short_name: 'Денежка',
+name: 'Laveh',
+    short_name: 'Laveh',
     description: 'Персональный финмонитор',
         theme_color: '#090d12',
         background_color: '#090d12',
@@ -43,9 +44,9 @@ name: 'Денежка',
       },
     }),
     {
-      name: 'denezhka-state-dump',
+      name: 'laveh-state-dump',
       configureServer(server) {
-        server.middlewares.use('/__denezhka_state', (req, res) => {
+        server.middlewares.use('/__laveh_state', (req, res) => {
           if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
           let body = '';
           req.on('data', (chunk) => (body += chunk));

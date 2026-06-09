@@ -1,5 +1,7 @@
 # Work Plan: Phase 3 — Dashboard Calculations
 
+> **Status: Done**
+
 ## 0) Orientation
 - Read: `tasks/03-data-and-calculations.md` §17 (calculation service interface), `tasks/02-home-screen-ux.md` §6 (formulas), §9.1 (mode logic)
 - Anchor context: `docs/index.md` → Core domain logic: `src/domain/dashboard/calculateDashboard.ts`, `src/domain/dashboard/types.ts`

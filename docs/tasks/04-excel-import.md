@@ -1,5 +1,7 @@
 # Work Plan: Phase 4 — Excel Import Flow
 
+> **Status: Done**
+
 ## 0) Orientation
 - Read: `tasks/04-import-and-screens.md` §12-13 (Excel import flow, column mapping, dedup hash, categorization rules), `tasks/01-product-and-stack.md` §3 (SheetJS), `tasks/03-data-and-calculations.md` §11 (ImportBatch type)
 - Anchor context: `docs/index.md` → Adapters: `src/domain/import/parseWorkbook.ts`, `src/domain/import/deduplicateTransactions.ts`

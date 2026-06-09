@@ -37,22 +37,16 @@ export default function EditBalanceModal({ onClose }: Props) {
     (a) => !a.includeInCashBalance,
   );
 
-  const creditAvailableAmount = (acc: typeof storeAccounts[number]) => {
-    const limit = creditLimitEdits[acc.id] ?? acc.creditLimit;
-    if (limit === undefined || limit === 0) return 0;
-    return Math.max(0, limit + acc.currentBalance + (edits[acc.id] ?? 0));
-  };
-
   const currentTotal =
     debitAccounts.reduce((sum, a) => sum + a.currentBalance + (edits[a.id] ?? 0), 0) +
-    creditAccounts.reduce((sum, a) => sum + creditAvailableAmount(a), 0);
+    creditAccounts.reduce((sum, a) => sum + Math.max(0, a.currentBalance + (edits[a.id] ?? 0)), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 pb-8">
       <div className="w-full max-w-[430px] rounded-[18px] bg-[#121821] p-[18px]">
-        <h3 className="mb-2 text-base font-bold text-[#eef4f8]">Баланс сейчас</h3>
+        <h3 className="mb-2 text-base font-bold text-[#eef4f8]">Свои деньги</h3>
         <p className="mb-4 text-xs text-[#8795a5]">
-          Сумма остатков дебетовых счетов и доступных средств кредитных карт.
+          Свои реальные деньги: дебетовые остатки и переплаты по кредиткам.
         </p>
 
         <div className="mb-4 space-y-3">
@@ -92,7 +86,7 @@ export default function EditBalanceModal({ onClose }: Props) {
             <>
               <div className="text-xs font-semibold text-[#8795a5]">Кредитные счета</div>
               {creditAccounts.map((acc) => {
-                const avail = creditAvailableAmount(acc);
+                const editedBalance = acc.currentBalance + (edits[acc.id] ?? 0);
                 return (
                   <div
                     key={acc.id}
@@ -100,9 +94,15 @@ export default function EditBalanceModal({ onClose }: Props) {
                   >
                     <div className="mb-2 flex items-center justify-between">
                       <div className="text-sm font-medium text-[#eef4f8]">{acc.name}</div>
-                      <div className="text-xs text-[#75b8ff]">
-                        Доступно: {avail.toLocaleString('ru-RU')} ₽
-                      </div>
+                      {editedBalance < 0 ? (
+                        <div className="text-xs text-[#e74c3c]">
+                          Долг: {Math.abs(editedBalance).toLocaleString('ru-RU')} ₽
+                        </div>
+                      ) : (
+                        <div className="text-xs text-[#58d68d]">
+                          Переплата: {editedBalance.toLocaleString('ru-RU')} ₽
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex-1">
@@ -173,7 +173,7 @@ export default function EditBalanceModal({ onClose }: Props) {
         </div>
 
         <div className="mb-4 flex items-center justify-between rounded-xl bg-[#171f2a] p-3">
-          <span className="text-sm font-semibold text-[#eef4f8]">Итого баланс сейчас</span>
+          <span className="text-sm font-semibold text-[#eef4f8]">Свои деньги</span>
           <span className="text-lg font-bold text-[#58d68d]">
             {currentTotal.toLocaleString('ru-RU')} ₽
           </span>

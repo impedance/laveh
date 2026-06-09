@@ -1,5 +1,7 @@
 # Work Plan: Phase 1 — Static UI (HTML Mock → React Components)
 
+> **Status: Done**
+
 ## 0) Orientation
 - Read: `tasks/02-home-screen-ux.md` (component specs), `tasks/05-visual-phases-delivery.md` §18-19 (visual design, project structure), `denezhka_dark_dashboard_mock.html` (reference render)
 - Anchor context: `docs/index.md` → Component paths: `src/components/cards/*`, `src/components/layout/*`, `src/pages/HomePage.tsx`

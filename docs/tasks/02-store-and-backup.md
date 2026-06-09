@@ -1,5 +1,7 @@
 # Work Plan: Phase 2 — Zustand Store + Data + Backup
 
+> **Status: Done**
+
 ## 0) Orientation
 - Read: `tasks/03-data-and-calculations.md` §11 (data model, 8 entity types), `tasks/01-product-and-stack.md` §3 (localStorage justification), `tasks/05-visual-phases-delivery.md` §21 Phase 2
 - Anchor context: `docs/index.md` → Typing Surfaces: `src/store/types.ts`, `src/store/index.ts`, `src/store/seed.ts`

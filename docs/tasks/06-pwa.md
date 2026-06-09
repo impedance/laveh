@@ -1,5 +1,7 @@
 # Work Plan: Phase 6 — PWA Installation & Offline Support
 
+> **Status: Done**
+
 ## 0) Orientation
 - Read: `tasks/01-product-and-stack.md` §3-4 (PWA requirements, iPhone limitations), `tasks/05-visual-phases-delivery.md` §18-19 (visual design, acceptance criteria for PWA)
 - Anchor context: `docs/index.md` → PWA config lives in `src/pwa/manifest.ts` (planned)

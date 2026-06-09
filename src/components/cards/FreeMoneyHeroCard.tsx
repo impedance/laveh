@@ -18,21 +18,22 @@ export default function FreeMoneyHeroCard({ data, onEditBalance }: Props) {
           </div>
         </div>
       </div>
-      <div>
-        <button
-          type="button"
-          onClick={onEditBalance}
-          className="cursor-pointer text-left"
-        >
-          <div className="text-xs text-[#8795a5]">Баланс сейчас</div>
-          <div className="text-sm font-bold text-[#eef4f8]">{data.balanceNow.toLocaleString('ru-RU')} ₽</div>
-          {data.creditAvailable > 0 && (
-            <div className="text-xs text-[#75b8ff] mt-0.5">
-              включая {data.creditAvailable.toLocaleString('ru-RU')} ₽ кредитных
-            </div>
-          )}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onEditBalance}
+        className="cursor-pointer text-left"
+      >
+        <div className="mb-1">
+          <div className="text-xs text-[#8795a5]">Свои деньги</div>
+          <div className="text-sm font-bold text-[#eef4f8]">{data.ownMoney.toLocaleString('ru-RU')} ₽</div>
+        </div>
+        {data.totalDebt > 0 && (
+          <div>
+            <div className="text-xs text-[#e74c3c]">Долги</div>
+            <div className="text-sm font-bold text-[#e74c3c]">−{data.totalDebt.toLocaleString('ru-RU')} ₽</div>
+          </div>
+        )}
+      </button>
     </section>
   );
 }

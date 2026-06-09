@@ -2,26 +2,21 @@ import type { Account, Category, CategoryGroup } from '../../store/types';
 import type { DashboardInput, DashboardViewModel, FreeMoneyView, CategoryGroupView, CategoryView } from './types';
 import { daysBetween } from '../money/dateUtils';
 
-function creditAvailableFunds(a: Account): number {
-  if (a.creditLimit === undefined || a.creditLimit === 0) return 0;
-  return Math.max(0, a.creditLimit + a.currentBalance);
-}
-
-function computeCurrentCashBalance(accounts: Account[]): number {
+function computeOwnMoney(accounts: Account[]): number {
   return accounts
     .filter((a) => a.includeInCashBalance)
     .reduce((sum, a) => {
       if (a.type === 'credit') {
-        return sum + creditAvailableFunds(a);
+        return sum + Math.max(0, a.currentBalance);
       }
       return sum + a.currentBalance;
     }, 0);
 }
 
-function computeCreditAvailable(accounts: Account[]): number {
+function computeTotalDebt(accounts: Account[]): number {
   return accounts
     .filter((a) => a.includeInCashBalance && a.type === 'credit')
-    .reduce((sum, a) => sum + creditAvailableFunds(a), 0);
+    .reduce((sum, a) => sum + Math.max(0, -a.currentBalance), 0);
 }
 
 function computeTotalRequiredAllocations(
@@ -37,14 +32,13 @@ function computeTotalRequiredAllocations(
   return Math.round(totalPlan * monthFraction);
 }
 
-function computeFreeUntilNextIncome(input: DashboardInput): number {
-  const cashBalance = computeCurrentCashBalance(input.accounts);
+function computeFreeUntilNextIncome(input: DashboardInput, ownMoney: number): number {
   const totalRequired = computeTotalRequiredAllocations(
     input.categories,
     input.nextIncomeDate,
     input.today,
   );
-  return cashBalance - totalRequired;
+  return ownMoney - totalRequired;
 }
 
 function computeSpendingGroupsView(
@@ -63,15 +57,17 @@ function computeSpendingGroupsView(
 }
 
 export function calculateDashboard(input: DashboardInput): DashboardViewModel {
-  const cashBalance = computeCurrentCashBalance(input.accounts);
+  const ownMoney = computeOwnMoney(input.accounts);
+  const totalDebt = computeTotalDebt(input.accounts);
 
-  const freeAmount = computeFreeUntilNextIncome(input);
-  const creditAvailableAmount = computeCreditAvailable(input.accounts);
+  const freeAmount = computeFreeUntilNextIncome(input, ownMoney);
 
   const freeMoney: FreeMoneyView = {
     amount: freeAmount,
-    balanceNow: cashBalance,
-    creditAvailable: creditAvailableAmount,
+    ownMoney,
+    totalDebt,
+    netWorth: ownMoney - totalDebt,
+    balanceNow: ownMoney,
   };
 
   const spendingGroups = computeSpendingGroupsView(input.categories, input.categoryGroups);

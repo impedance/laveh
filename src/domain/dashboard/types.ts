@@ -16,8 +16,10 @@ export interface DashboardInput {
 
 export interface FreeMoneyView {
   amount: number;
+  ownMoney: number;
+  totalDebt: number;
+  netWorth: number;
   balanceNow: number;
-  creditAvailable: number;
 }
 
 export interface CategoryView {

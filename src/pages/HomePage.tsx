@@ -36,7 +36,7 @@ export default function HomePage({ onTabChange }: Props) {
     <AppLayout>
       <div className="mb-[14px] flex items-center justify-between">
         <div>
-          <strong className="block text-lg tracking-[-0.02em] text-[#eef4f8]">Денежка</strong>
+          <strong className="block text-lg tracking-[-0.02em] text-[#eef4f8]">Laveh</strong>
           <span className="mt-0.5 block text-xs text-[#8795a5]">Финансовая навигация · июнь</span>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#75b8ff] text-sm font-bold text-[#090d12]">

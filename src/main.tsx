@@ -18,7 +18,7 @@ if (import.meta.env.DEV) {
       try {
         const { useStore } = await import('./store');
         const state = useStore.getState();
-        await fetch('/__denezhka_state', {
+        await fetch('/__laveh_state', {
           method: 'POST',
           body: JSON.stringify({
             accounts: state.accounts,

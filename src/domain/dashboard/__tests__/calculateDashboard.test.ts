@@ -29,18 +29,21 @@ const baseInput: DashboardInput = {
 };
 
 describe('calculateDashboard', () => {
-  it('freeUntilNextIncome = cashBalance - proportionalLiving', () => {
+  it('freeUntilNextIncome = ownMoney - proportionalLiving', () => {
     const result = calculateDashboard(baseInput);
-    const cashBalance = 212000;
+    const ownMoney = 212000; // debit only, credit-1 has -30000 → contributes 0 to ownMoney
     const totalPlan = 60000 + 5000 + 20000;
     const daysToIncome = 18;
     const monthFraction = daysToIncome / 30;
     const expectedProportional = Math.round(totalPlan * monthFraction);
-    expect(result.freeMoney.balanceNow).toBe(cashBalance);
-    expect(result.freeMoney.amount).toBe(cashBalance - expectedProportional);
+    expect(result.freeMoney.ownMoney).toBe(ownMoney);
+    expect(result.freeMoney.balanceNow).toBe(ownMoney);
+    expect(result.freeMoney.amount).toBe(ownMoney - expectedProportional);
+    expect(result.freeMoney.totalDebt).toBe(30000);
+    expect(result.freeMoney.netWorth).toBe(ownMoney - 30000);
   });
 
-  it('credit account without creditLimit contributes 0 to cash balance', () => {
+  it('credit account with positive balance contributes overpayment to ownMoney', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
@@ -49,10 +52,12 @@ describe('calculateDashboard', () => {
       ],
     };
     const result = calculateDashboard(input);
-    expect(result.freeMoney.balanceNow).toBe(100000);
+    expect(result.freeMoney.ownMoney).toBe(150000);
+    expect(result.freeMoney.balanceNow).toBe(150000);
+    expect(result.freeMoney.totalDebt).toBe(0);
   });
 
-  it('credit account with creditLimit contributes available funds to cash balance', () => {
+  it('credit account with debt: ownMoney excludes debt, totalDebt includes it', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
@@ -61,11 +66,13 @@ describe('calculateDashboard', () => {
       ],
     };
     const result = calculateDashboard(input);
-    expect(result.freeMoney.balanceNow).toBe(100000 + 200000);
-    expect(result.freeMoney.creditAvailable).toBe(200000);
+    expect(result.freeMoney.ownMoney).toBe(100000);
+    expect(result.freeMoney.balanceNow).toBe(100000);
+    expect(result.freeMoney.totalDebt).toBe(300000);
+    expect(result.freeMoney.netWorth).toBe(-200000);
   });
 
-  it('credit account over limit contributes 0', () => {
+  it('credit account over limit: ownMoney excludes debt, totalDebt includes full debt', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
@@ -74,8 +81,48 @@ describe('calculateDashboard', () => {
       ],
     };
     const result = calculateDashboard(input);
-    expect(result.freeMoney.balanceNow).toBe(100000);
-    expect(result.freeMoney.creditAvailable).toBe(0);
+    expect(result.freeMoney.ownMoney).toBe(100000);
+    expect(result.freeMoney.totalDebt).toBe(550000);
+  });
+
+  it('netWorth = ownMoney - totalDebt', () => {
+    const input: DashboardInput = {
+      ...baseInput,
+      accounts: [
+        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 200000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: -110000 },
+      ],
+    };
+    const result = calculateDashboard(input);
+    expect(result.freeMoney.ownMoney).toBe(200000);
+    expect(result.freeMoney.totalDebt).toBe(110000);
+    expect(result.freeMoney.netWorth).toBe(90000);
+  });
+
+  it('debit account with positive balance contributes fully to ownMoney', () => {
+    const input: DashboardInput = {
+      ...baseInput,
+      accounts: [
+        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 150000 },
+      ],
+    };
+    const result = calculateDashboard(input);
+    expect(result.freeMoney.ownMoney).toBe(150000);
+    expect(result.freeMoney.totalDebt).toBe(0);
+    expect(result.freeMoney.netWorth).toBe(150000);
+  });
+
+  it('excluded accounts do not affect ownMoney or totalDebt', () => {
+    const input: DashboardInput = {
+      ...baseInput,
+      accounts: [
+        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: false, currentBalance: -50000 },
+      ],
+    };
+    const result = calculateDashboard(input);
+    expect(result.freeMoney.ownMoney).toBe(100000);
+    expect(result.freeMoney.totalDebt).toBe(0);
   });
 
   it('spendingGroups has correct grouping and totalPlan', () => {

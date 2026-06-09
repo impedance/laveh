@@ -1,5 +1,7 @@
 # Work Plan: Phase 0 — Project Scaffolding
 
+> **Status: Done**
+
 ## 0) Orientation
 - Read: `AGENTS.md`, `docs/index.md`, `tasks/01-product-and-stack.md` (stack decisions), `tasks/05-visual-phases-delivery.md` (project structure)
 - Anchor context: `docs/index.md` — Code Map, Typing Surfaces. Existing HTML mock: `denezhka_dark_dashboard_mock.html`.
