@@ -13,6 +13,7 @@ function downloadBackup() {
       nextIncomeDate: state.nextIncomeDate,
       expectedMonthlyIncome: state.expectedMonthlyIncome,
       todayFlexibleSpent: state.todayFlexibleSpent,
+      obligatoryPayments: state.obligatoryPayments,
     },
     null,
     2,

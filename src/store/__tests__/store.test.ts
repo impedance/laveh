@@ -13,6 +13,7 @@ function resetStore() {
     nextIncomeDate: '',
     expectedMonthlyIncome: 0,
     todayFlexibleSpent: 0,
+    obligatoryPayments: [],
   });
 }
 
@@ -48,6 +49,9 @@ describe('Zustand store', () => {
     expect(keys).toContain('addAccount');
     expect(keys).toContain('updateAccount');
     expect(keys).toContain('deleteAccount');
+    expect(keys).toContain('addObligatoryPayment');
+    expect(keys).toContain('updateObligatoryPayment');
+    expect(keys).toContain('deleteObligatoryPayment');
   });
 
   it('returns JSON-serializable state', () => {
@@ -238,5 +242,38 @@ describe('Zustand store', () => {
   it('restoreFromJSON handles missing categoryGroups', () => {
     useStore.getState().restoreFromJSON(JSON.stringify({ accounts: [] }));
     expect(useStore.getState().categoryGroups).toEqual(seedData.categoryGroups);
+  });
+
+  it('adds an obligatory payment', () => {
+    useStore.getState().addObligatoryPayment({ name: 'Ипотека', amount: 82000, dayOfMonth: 12 });
+    const s = useStore.getState();
+    expect(s.obligatoryPayments).toHaveLength(1);
+    expect(s.obligatoryPayments[0].name).toBe('Ипотека');
+    expect(s.obligatoryPayments[0].amount).toBe(82000);
+    expect(s.obligatoryPayments[0].dayOfMonth).toBe(12);
+  });
+
+  it('updates an obligatory payment', () => {
+    useStore.getState().addObligatoryPayment({ name: 'Ипотека', amount: 82000, dayOfMonth: 12 });
+    const id = useStore.getState().obligatoryPayments[0].id;
+    useStore.getState().updateObligatoryPayment(id, { amount: 80000 });
+    expect(useStore.getState().obligatoryPayments[0].amount).toBe(80000);
+  });
+
+  it('deletes an obligatory payment', () => {
+    useStore.getState().addObligatoryPayment({ name: 'Ипотека', amount: 82000, dayOfMonth: 12 });
+    const id = useStore.getState().obligatoryPayments[0].id;
+    useStore.getState().deleteObligatoryPayment(id);
+    expect(useStore.getState().obligatoryPayments).toHaveLength(0);
+  });
+
+  it('restoreFromJSON restores obligatoryPayments', () => {
+    const json = JSON.stringify({
+      accounts: [],
+      obligatoryPayments: [{ id: 'obl-1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 }],
+    });
+    useStore.getState().restoreFromJSON(json);
+    expect(useStore.getState().obligatoryPayments).toHaveLength(1);
+    expect(useStore.getState().obligatoryPayments[0].name).toBe('Ипотека');
   });
 });

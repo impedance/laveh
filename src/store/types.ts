@@ -80,6 +80,13 @@ export interface BankMapping {
   hitCount: number;
 }
 
+export interface ObligatoryPayment {
+  id: string;
+  name: string;
+  amount: number;
+  dayOfMonth: number;
+}
+
 export interface StoreState {
   accounts: Account[];
   transactions: Transaction[];
@@ -91,6 +98,7 @@ export interface StoreState {
   nextIncomeDate: string;
   expectedMonthlyIncome: number;
   todayFlexibleSpent: number;
+  obligatoryPayments: ObligatoryPayment[];
 }
 
 export interface StoreActions {
@@ -116,6 +124,9 @@ export interface StoreActions {
   deleteGroup: (id: string) => void;
   reorderGroups: (ids: string[]) => void;
   moveCategoryToGroup: (categoryId: string, groupId: string) => void;
+  addObligatoryPayment: (payment: Omit<ObligatoryPayment, 'id'>) => void;
+  updateObligatoryPayment: (id: string, updates: Partial<ObligatoryPayment>) => void;
+  deleteObligatoryPayment: (id: string) => void;
 }
 
 export type DenezhkaStore = StoreState & StoreActions;

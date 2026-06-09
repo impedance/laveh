@@ -1,5 +1,5 @@
-import type { Account, Category, CategoryGroup } from '../../store/types';
-import type { DashboardInput, DashboardViewModel, FreeMoneyView, CategoryGroupView, CategoryView } from './types';
+import type { Account, Category, CategoryGroup, ObligatoryPayment } from '../../store/types';
+import type { DashboardInput, DashboardViewModel, FreeMoneyView, CategoryGroupView, CategoryView, ObligatoryPaymentView } from './types';
 import { daysBetween } from '../money/dateUtils';
 
 function computeOwnMoney(accounts: Account[]): number {
@@ -56,6 +56,31 @@ function computeSpendingGroupsView(
   }).filter((g) => g.categories.length > 0);
 }
 
+function getNextDueDate(dayOfMonth: number, today: string): string {
+  const t = new Date(today);
+  const year = t.getFullYear();
+  const month = t.getMonth(); // 0-based
+  const candidate = new Date(year, month, dayOfMonth);
+  if (candidate >= t) {
+    return candidate.toISOString().slice(0, 10);
+  }
+  const nextMonth = new Date(year, month + 1, dayOfMonth);
+  return nextMonth.toISOString().slice(0, 10);
+}
+
+function computeObligatoryPaymentsView(
+  payments: ObligatoryPayment[],
+  today: string,
+  nextIncomeDate: string,
+): ObligatoryPaymentView[] {
+  if (!nextIncomeDate) return [];
+  return payments.map((p) => {
+    const dueDate = getNextDueDate(p.dayOfMonth, today);
+    const isDue = dueDate <= nextIncomeDate;
+    return { ...p, dueDate, isDue };
+  });
+}
+
 export function calculateDashboard(input: DashboardInput): DashboardViewModel {
   const ownMoney = computeOwnMoney(input.accounts);
   const totalDebt = computeTotalDebt(input.accounts);
@@ -71,6 +96,11 @@ export function calculateDashboard(input: DashboardInput): DashboardViewModel {
   };
 
   const spendingGroups = computeSpendingGroupsView(input.categories, input.categoryGroups);
+  const obligatoryPayments = computeObligatoryPaymentsView(
+    input.obligatoryPayments,
+    input.today,
+    input.nextIncomeDate,
+  );
 
-  return { freeMoney, spendingGroups };
+  return { freeMoney, spendingGroups, obligatoryPayments };
 }

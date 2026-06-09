@@ -5,9 +5,11 @@ import type { DashboardInput } from '../domain/dashboard/types';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
 import FreeMoneyHeroCard from '../components/cards/FreeMoneyHeroCard';
+import ObligatoryPaymentsCard from '../components/cards/ObligatoryPaymentsCard';
 import SpendingGroupsCard from '../components/cards/SpendingGroupsCard';
 import ReviewQueue from '../components/operations/ReviewQueue';
 import EditBalanceModal from '../components/operations/EditBalanceModal';
+import EditObligatoryPaymentsModal from '../components/operations/EditObligatoryPaymentsModal';
 
 interface Props {
   onTabChange: (tab: string) => void;
@@ -16,6 +18,7 @@ interface Props {
 export default function HomePage({ onTabChange }: Props) {
   const store = useStore();
   const [showEditBalance, setShowEditBalance] = useState(false);
+  const [showEditObligatory, setShowEditObligatory] = useState(false);
 
   const input: DashboardInput = {
     accounts: store.accounts,
@@ -28,6 +31,7 @@ export default function HomePage({ onTabChange }: Props) {
     expectedMonthlyIncome: store.expectedMonthlyIncome,
     todayFlexibleSpent: store.todayFlexibleSpent,
     today: new Date().toISOString().slice(0, 10),
+    obligatoryPayments: store.obligatoryPayments,
   };
 
   const vm = calculateDashboard(input);
@@ -50,6 +54,11 @@ export default function HomePage({ onTabChange }: Props) {
           data={vm.freeMoney}
           onEditBalance={() => setShowEditBalance(true)}
         />
+        <ObligatoryPaymentsCard
+          payments={vm.obligatoryPayments}
+          freeAmount={vm.freeMoney.amount}
+          onEdit={() => setShowEditObligatory(true)}
+        />
         <SpendingGroupsCard groups={vm.spendingGroups} />
       </div>
 
@@ -60,6 +69,12 @@ export default function HomePage({ onTabChange }: Props) {
       {showEditBalance && (
         <EditBalanceModal
           onClose={() => setShowEditBalance(false)}
+        />
+      )}
+
+      {showEditObligatory && (
+        <EditObligatoryPaymentsModal
+          onClose={() => setShowEditObligatory(false)}
         />
       )}
     </AppLayout>

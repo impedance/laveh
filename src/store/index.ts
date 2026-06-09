@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DenezhkaStore, Transaction, Category, CategoryGroup, Account, CategorizationRule, ImportBatch, BankMapping } from './types';
+import type { DenezhkaStore, Transaction, Category, CategoryGroup, Account, CategorizationRule, ImportBatch, BankMapping, ObligatoryPayment } from './types';
 import { seedData } from './seed';
 import { normalizeDateField } from '../domain/import/excelDate';
 import { applyRules } from '../domain/categorization/applyRules';
@@ -219,6 +219,25 @@ export const useStore = create<DenezhkaStore>()(
         });
       },
 
+      addObligatoryPayment: (payment: Omit<ObligatoryPayment, 'id'>) => {
+        const newPayment: ObligatoryPayment = { ...payment, id: generateId() };
+        set({ obligatoryPayments: [...get().obligatoryPayments, newPayment] });
+      },
+
+      updateObligatoryPayment: (id: string, updates: Partial<ObligatoryPayment>) => {
+        set({
+          obligatoryPayments: get().obligatoryPayments.map((p) =>
+            p.id === id ? { ...p, ...updates } : p,
+          ),
+        });
+      },
+
+      deleteObligatoryPayment: (id: string) => {
+        set({
+          obligatoryPayments: get().obligatoryPayments.filter((p) => p.id !== id),
+        });
+      },
+
       restoreFromJSON: (json: string) => {
         const parsed = JSON.parse(json);
         set({
@@ -232,12 +251,13 @@ export const useStore = create<DenezhkaStore>()(
           nextIncomeDate: parsed.nextIncomeDate ?? get().nextIncomeDate,
           expectedMonthlyIncome: parsed.expectedMonthlyIncome ?? get().expectedMonthlyIncome,
           todayFlexibleSpent: parsed.todayFlexibleSpent ?? 0,
+          obligatoryPayments: parsed.obligatoryPayments ?? [],
         });
       },
     }),
     {
       name: 'laveh-store',
-      version: 3,
+      version: 4,
       migrate: (state: unknown, version: number) => {
         const s = state as Record<string, unknown>;
         if (version < 1 && Array.isArray(s.transactions)) {
@@ -306,6 +326,12 @@ export const useStore = create<DenezhkaStore>()(
             });
           }
         }
+        if (version < 4) {
+          s.obligatoryPayments = [
+            { id: 'obl-1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 },
+            { id: 'obl-2', name: 'Автокредит', amount: 34000, dayOfMonth: 25 },
+          ];
+        }
         return s as unknown as typeof seedData;
       },
       partialize: (state) => ({
@@ -319,6 +345,7 @@ export const useStore = create<DenezhkaStore>()(
         nextIncomeDate: state.nextIncomeDate,
         expectedMonthlyIncome: state.expectedMonthlyIncome,
         todayFlexibleSpent: state.todayFlexibleSpent,
+        obligatoryPayments: state.obligatoryPayments,
       }),
     },
   ),

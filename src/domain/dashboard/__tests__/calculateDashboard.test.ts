@@ -26,6 +26,7 @@ const baseInput: DashboardInput = {
   expectedMonthlyIncome: 212000,
   todayFlexibleSpent: 1240,
   today: '2026-06-07',
+  obligatoryPayments: [],
 };
 
 describe('calculateDashboard', () => {
@@ -144,5 +145,44 @@ describe('calculateDashboard', () => {
     expect(result.spendingGroups.find((g) => g.id === 'group-fun')).toBeUndefined();
     expect(result.spendingGroups.find((g) => g.id === 'group-reserves')).toBeUndefined();
     expect(result.spendingGroups.find((g) => g.id === 'group-debts')).toBeUndefined();
+  });
+
+  it('obligatoryPayments marks payment as due if it falls between today and next income', () => {
+    const input: DashboardInput = {
+      ...baseInput,
+      today: '2026-06-07',
+      nextIncomeDate: '2026-06-25',
+      obligatoryPayments: [
+        { id: '1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 },
+        { id: '2', name: 'Автокредит', amount: 34000, dayOfMonth: 25 },
+        { id: '3', name: 'Подписка', amount: 1000, dayOfMonth: 5 },
+      ],
+    };
+    const result = calculateDashboard(input);
+    expect(result.obligatoryPayments).toHaveLength(3);
+    const ipoteka = result.obligatoryPayments.find((p) => p.id === '1')!;
+    expect(ipoteka.isDue).toBe(true);
+    const car = result.obligatoryPayments.find((p) => p.id === '2')!;
+    expect(car.isDue).toBe(true);
+    const sub = result.obligatoryPayments.find((p) => p.id === '3')!;
+    expect(sub.isDue).toBe(false); // June 5 already passed, next is July 5
+  });
+
+  it('obligatoryPayments due date rolls to next month if day already passed', () => {
+    const input: DashboardInput = {
+      ...baseInput,
+      today: '2026-06-13',
+      nextIncomeDate: '2026-06-25',
+      obligatoryPayments: [
+        { id: '1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 },
+      ],
+    };
+    const result = calculateDashboard(input);
+    expect(result.obligatoryPayments[0].isDue).toBe(false); // June 12 passed, next July 12 > June 25
+  });
+
+  it('empty obligatoryPayments returns empty array', () => {
+    const result = calculateDashboard(baseInput);
+    expect(result.obligatoryPayments).toEqual([]);
   });
 });

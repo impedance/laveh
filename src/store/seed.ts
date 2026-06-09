@@ -33,4 +33,8 @@ export const seedData: StoreState = {
   nextIncomeDate: '2026-06-25',
   expectedMonthlyIncome: 212000,
   todayFlexibleSpent: 1240,
+  obligatoryPayments: [
+    { id: 'obl-1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 },
+    { id: 'obl-2', name: 'Автокредит', amount: 34000, dayOfMonth: 25 },
+  ],
 };
