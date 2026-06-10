@@ -4,8 +4,8 @@ import type { DashboardInput } from '../types';
 
 const baseInput: DashboardInput = {
   accounts: [
-    { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 212000 },
-    { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: -30000 },
+    { id: 'cash-1', name: 'Основной', type: 'debit', onBudget: true, currentBalance: 212000 },
+    { id: 'credit-1', name: 'Кредитка', type: 'credit', onBudget: true, currentBalance: -30000 },
   ],
   transactions: [],
   categories: [
@@ -26,7 +26,6 @@ const baseInput: DashboardInput = {
   expectedMonthlyIncome: 212000,
   todayFlexibleSpent: 1240,
   today: '2026-06-07',
-  obligatoryPayments: [],
 };
 
 describe('calculateDashboard', () => {
@@ -48,8 +47,8 @@ describe('calculateDashboard', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
-        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 },
-        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: 50000 },
+        { id: 'cash-1', name: 'Основной', type: 'debit', onBudget: true, currentBalance: 100000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', onBudget: true, currentBalance: 50000 },
       ],
     };
     const result = calculateDashboard(input);
@@ -62,8 +61,8 @@ describe('calculateDashboard', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
-        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 },
-        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: -300000, creditLimit: 500000 },
+        { id: 'cash-1', name: 'Основной', type: 'debit', onBudget: true, currentBalance: 100000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', onBudget: true, currentBalance: -300000, creditLimit: 500000 },
       ],
     };
     const result = calculateDashboard(input);
@@ -77,8 +76,8 @@ describe('calculateDashboard', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
-        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 },
-        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: -550000, creditLimit: 500000 },
+        { id: 'cash-1', name: 'Основной', type: 'debit', onBudget: true, currentBalance: 100000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', onBudget: true, currentBalance: -550000, creditLimit: 500000 },
       ],
     };
     const result = calculateDashboard(input);
@@ -90,8 +89,8 @@ describe('calculateDashboard', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
-        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 200000 },
-        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: true, currentBalance: -110000 },
+        { id: 'cash-1', name: 'Основной', type: 'debit', onBudget: true, currentBalance: 200000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', onBudget: true, currentBalance: -110000 },
       ],
     };
     const result = calculateDashboard(input);
@@ -104,7 +103,7 @@ describe('calculateDashboard', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
-        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 150000 },
+        { id: 'cash-1', name: 'Основной', type: 'debit', onBudget: true, currentBalance: 150000 },
       ],
     };
     const result = calculateDashboard(input);
@@ -117,8 +116,8 @@ describe('calculateDashboard', () => {
     const input: DashboardInput = {
       ...baseInput,
       accounts: [
-        { id: 'cash-1', name: 'Основной', type: 'debit', includeInCashBalance: true, currentBalance: 100000 },
-        { id: 'credit-1', name: 'Кредитка', type: 'credit', includeInCashBalance: false, currentBalance: -50000 },
+        { id: 'cash-1', name: 'Основной', type: 'debit', onBudget: true, currentBalance: 100000 },
+        { id: 'credit-1', name: 'Кредитка', type: 'credit', onBudget: false, currentBalance: -50000 },
       ],
     };
     const result = calculateDashboard(input);
@@ -147,42 +146,23 @@ describe('calculateDashboard', () => {
     expect(result.spendingGroups.find((g) => g.id === 'group-debts')).toBeUndefined();
   });
 
-  it('obligatoryPayments marks payment as due if it falls between today and next income', () => {
-    const input: DashboardInput = {
-      ...baseInput,
-      today: '2026-06-07',
-      nextIncomeDate: '2026-06-25',
-      obligatoryPayments: [
-        { id: '1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 },
-        { id: '2', name: 'Автокредит', amount: 34000, dayOfMonth: 25 },
-        { id: '3', name: 'Подписка', amount: 1000, dayOfMonth: 5 },
-      ],
-    };
-    const result = calculateDashboard(input);
-    expect(result.obligatoryPayments).toHaveLength(3);
-    const ipoteka = result.obligatoryPayments.find((p) => p.id === '1')!;
-    expect(ipoteka.isDue).toBe(true);
-    const car = result.obligatoryPayments.find((p) => p.id === '2')!;
-    expect(car.isDue).toBe(true);
-    const sub = result.obligatoryPayments.find((p) => p.id === '3')!;
-    expect(sub.isDue).toBe(false); // June 5 already passed, next is July 5
-  });
-
-  it('obligatoryPayments due date rolls to next month if day already passed', () => {
-    const input: DashboardInput = {
-      ...baseInput,
-      today: '2026-06-13',
-      nextIncomeDate: '2026-06-25',
-      obligatoryPayments: [
-        { id: '1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 },
-      ],
-    };
-    const result = calculateDashboard(input);
-    expect(result.obligatoryPayments[0].isDue).toBe(false); // June 12 passed, next July 12 > June 25
-  });
-
-  it('empty obligatoryPayments returns empty array', () => {
+  it('dashboardViewModel has freeMoney and spendingGroups', () => {
     const result = calculateDashboard(baseInput);
-    expect(result.obligatoryPayments).toEqual([]);
+    expect(result.freeMoney).toBeDefined();
+    expect(result.spendingGroups).toBeDefined();
+  });
+
+  it('groups are sorted by sortOrder', () => {
+    const result = calculateDashboard(baseInput);
+    const groupIds = result.spendingGroups.map((g) => g.id);
+    expect(groupIds[0]).toBe('group-obligatory');
+    expect(groupIds[1]).toBe('group-regular');
+  });
+
+  it('categories within groups are sorted by sortOrder', () => {
+    const result = calculateDashboard(baseInput);
+    const regular = result.spendingGroups.find((g) => g.id === 'group-regular')!;
+    expect(regular.categories[0].name).toBe('Подписки');
+    expect(regular.categories[1].name).toBe('Транспорт');
   });
 });

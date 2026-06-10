@@ -2,11 +2,13 @@ import type { StoreState } from './types';
 
 export const seedData: StoreState = {
   accounts: [
-    { id: 'cash-1', name: 'Основной счёт', type: 'debit', includeInCashBalance: true, currentBalance: 212000 },
+    { id: 'cash-1', name: 'Основной счёт', type: 'debit', onBudget: true, currentBalance: 212000 },
   ],
   transactions: [],
   categories: [
-    { id: 'cat-1', name: 'Продукты', plan: 60000, groupId: 'group-obligatory', sortOrder: 0 },
+    { id: 'cat-mortgage', name: 'Ипотека', plan: 82000, groupId: 'group-obligatory', sortOrder: 0 },
+    { id: 'cat-car', name: 'Автокредит', plan: 34000, groupId: 'group-obligatory', sortOrder: 1 },
+    { id: 'cat-1', name: 'Продукты', plan: 60000, groupId: 'group-obligatory', sortOrder: 2 },
     { id: 'cat-2', name: 'Подписки', plan: 5000, groupId: 'group-regular', sortOrder: 0 },
     { id: 'cat-3', name: 'Транспорт', plan: 20000, groupId: 'group-regular', sortOrder: 1 },
   ],
@@ -16,6 +18,7 @@ export const seedData: StoreState = {
     { id: 'group-fun', name: 'Отдых', sortOrder: 2 },
     { id: 'group-reserves', name: 'Резервы', sortOrder: 3 },
     { id: 'group-debts', name: 'Долги', sortOrder: 4 },
+    { id: 'group-cc-payments', name: 'Оплата карт', sortOrder: 99 },
   ],
   importBatches: [],
   bankMappings: [],
@@ -33,8 +36,12 @@ export const seedData: StoreState = {
   nextIncomeDate: '2026-06-25',
   expectedMonthlyIncome: 212000,
   todayFlexibleSpent: 1240,
-  obligatoryPayments: [
-    { id: 'obl-1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 },
-    { id: 'obl-2', name: 'Автокредит', amount: 34000, dayOfMonth: 25 },
+  monthStates: [
+    {
+      month: '2026-06',
+      categoryAssignments: {},
+      categoryCarryover: {},
+      toBeBudgeted: 0,
+    },
   ],
 };

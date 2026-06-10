@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import HomePage from '../pages/HomePage';
 import OperationsPage from '../pages/OperationsPage';
-import PlanPage from '../pages/PlanPage';
+import BudgetPage from '../pages/BudgetPage';
 import ImportPage from '../pages/ImportPage';
 
 export default function App() {
@@ -25,7 +25,7 @@ export default function App() {
   let page;
   switch (tab) {
     case 'operations': page = <OperationsPage onTabChange={setTab} />; break;
-    case 'plan': page = <PlanPage onTabChange={setTab} />; break;
+    case 'plan': page = <BudgetPage onTabChange={setTab} />; break;
     case 'import': page = <ImportPage onTabChange={setTab} />; break;
     default: page = <HomePage onTabChange={setTab} />; break;
   }

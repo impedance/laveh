@@ -1,15 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useStore } from '../store';
-import { calculateDashboard } from '../domain/dashboard/calculateDashboard';
-import type { DashboardInput } from '../domain/dashboard/types';
+import { calculateBudget } from '../domain/budget/calculateBudget';
+import type { BudgetInput } from '../domain/budget/types';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
-import FreeMoneyHeroCard from '../components/cards/FreeMoneyHeroCard';
-import ObligatoryPaymentsCard from '../components/cards/ObligatoryPaymentsCard';
-import SpendingGroupsCard from '../components/cards/SpendingGroupsCard';
+import ReadyToAssignHeroCard from '../components/cards/ReadyToAssignHeroCard';
+import BudgetGroupsCard from '../components/cards/BudgetGroupsCard';
+import CreditCardPaymentsCard from '../components/cards/CreditCardPaymentsCard';
 import ReviewQueue from '../components/operations/ReviewQueue';
 import EditBalanceModal from '../components/operations/EditBalanceModal';
-import EditObligatoryPaymentsModal from '../components/operations/EditObligatoryPaymentsModal';
 
 interface Props {
   onTabChange: (tab: string) => void;
@@ -18,23 +17,27 @@ interface Props {
 export default function HomePage({ onTabChange }: Props) {
   const store = useStore();
   const [showEditBalance, setShowEditBalance] = useState(false);
-  const [showEditObligatory, setShowEditObligatory] = useState(false);
 
-  const input: DashboardInput = {
-    accounts: store.accounts,
-    transactions: store.transactions,
-    categories: store.categories,
-    categoryGroups: store.categoryGroups,
-    importBatches: store.importBatches,
-    rules: store.rules,
-    nextIncomeDate: store.nextIncomeDate,
-    expectedMonthlyIncome: store.expectedMonthlyIncome,
-    todayFlexibleSpent: store.todayFlexibleSpent,
-    today: new Date().toISOString().slice(0, 10),
-    obligatoryPayments: store.obligatoryPayments,
-  };
+  const vm = useMemo(() => {
+    const month = new Date().toISOString().slice(0, 7);
+    const monthState = store.monthStates.find((ms) => ms.month === month) ?? {
+      month,
+      categoryAssignments: {},
+      categoryCarryover: {},
+      toBeBudgeted: 0,
+    };
 
-  const vm = calculateDashboard(input);
+    const input: BudgetInput = {
+      accounts: store.accounts,
+      transactions: store.transactions,
+      categories: store.categories,
+      categoryGroups: store.categoryGroups,
+      monthState,
+      month,
+    };
+
+    return calculateBudget(input);
+  }, [store.accounts, store.transactions, store.categories, store.categoryGroups, store.monthStates]);
 
   return (
     <AppLayout>
@@ -50,16 +53,15 @@ export default function HomePage({ onTabChange }: Props) {
 
       <div className="flex flex-col gap-[14px]">
         <ReviewQueue />
-        <FreeMoneyHeroCard
-          data={vm.freeMoney}
+        <ReadyToAssignHeroCard
+          toBeBudgeted={vm.toBeBudgeted}
+          ownMoney={vm.ownMoney}
+          totalDebt={vm.totalDebt}
+          onAssign={() => onTabChange('plan')}
           onEditBalance={() => setShowEditBalance(true)}
         />
-        <ObligatoryPaymentsCard
-          payments={vm.obligatoryPayments}
-          freeAmount={vm.freeMoney.amount}
-          onEdit={() => setShowEditObligatory(true)}
-        />
-        <SpendingGroupsCard groups={vm.spendingGroups} />
+        <BudgetGroupsCard groups={vm.categoryGroups} />
+        <CreditCardPaymentsCard payments={vm.creditCardPayments} />
       </div>
 
       <div className="mt-[14px]">
@@ -69,12 +71,6 @@ export default function HomePage({ onTabChange }: Props) {
       {showEditBalance && (
         <EditBalanceModal
           onClose={() => setShowEditBalance(false)}
-        />
-      )}
-
-      {showEditObligatory && (
-        <EditObligatoryPaymentsModal
-          onClose={() => setShowEditObligatory(false)}
         />
       )}
     </AppLayout>

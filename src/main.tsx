@@ -40,7 +40,7 @@ import('./store').then(async ({ useStore }) => {
         nextIncomeDate: state.nextIncomeDate,
         expectedMonthlyIncome: state.expectedMonthlyIncome,
         todayFlexibleSpent: state.todayFlexibleSpent,
-        obligatoryPayments: state.obligatoryPayments,
+        monthStates: state.monthStates,
       });
     }, 2000);
   };
@@ -69,7 +69,7 @@ if (import.meta.env.DEV) {
             nextIncomeDate: state.nextIncomeDate,
             expectedMonthlyIncome: state.expectedMonthlyIncome,
             todayFlexibleSpent: state.todayFlexibleSpent,
-            obligatoryPayments: state.obligatoryPayments,
+            monthStates: state.monthStates,
           }),
         }).catch(() => undefined);
       } catch { /* noop */ }

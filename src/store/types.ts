@@ -2,7 +2,7 @@ export interface Account {
   id: string;
   name: string;
   type: 'debit' | 'credit';
-  includeInCashBalance: boolean;
+  onBudget: boolean;
   currentBalance: number;
   creditLimit?: number;
 }
@@ -14,6 +14,7 @@ export interface Transaction {
   amount: number;
   categoryId?: string;
   accountId: string;
+  transferAccountId?: string;
   importBatchId?: string;
   externalHash?: string;
   isReviewed?: boolean;
@@ -80,11 +81,11 @@ export interface BankMapping {
   hitCount: number;
 }
 
-export interface ObligatoryPayment {
-  id: string;
-  name: string;
-  amount: number;
-  dayOfMonth: number;
+export interface MonthState {
+  month: string;
+  categoryAssignments: Record<string, number>;
+  categoryCarryover: Record<string, number>;
+  toBeBudgeted: number;
 }
 
 export interface StoreState {
@@ -98,7 +99,7 @@ export interface StoreState {
   nextIncomeDate: string;
   expectedMonthlyIncome: number;
   todayFlexibleSpent: number;
-  obligatoryPayments: ObligatoryPayment[];
+  monthStates: MonthState[];
 }
 
 export interface StoreActions {
@@ -124,9 +125,10 @@ export interface StoreActions {
   deleteGroup: (id: string) => void;
   reorderGroups: (ids: string[]) => void;
   moveCategoryToGroup: (categoryId: string, groupId: string) => void;
-  addObligatoryPayment: (payment: Omit<ObligatoryPayment, 'id'>) => void;
-  updateObligatoryPayment: (id: string, updates: Partial<ObligatoryPayment>) => void;
-  deleteObligatoryPayment: (id: string) => void;
+  setCategoryAssigned: (month: string, categoryId: string, amount: number) => void;
+  setToBeBudgeted: (month: string, amount: number) => void;
+  addIncomeToTBB: (amount: number, month: string) => void;
+  ensureCurrentMonthState: () => void;
 }
 
 export type DenezhkaStore = StoreState & StoreActions;

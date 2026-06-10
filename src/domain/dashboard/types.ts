@@ -1,4 +1,4 @@
-import type { Account, Transaction, Category, CategoryGroup, ImportBatch, CategorizationRule, ObligatoryPayment } from '../../store/types';
+import type { Account, Transaction, Category, CategoryGroup, ImportBatch, CategorizationRule } from '../../store/types';
 
 export interface DashboardInput {
   accounts: Account[];
@@ -11,7 +11,6 @@ export interface DashboardInput {
   expectedMonthlyIncome: number;
   todayFlexibleSpent: number;
   today: string;
-  obligatoryPayments: ObligatoryPayment[];
 }
 
 
@@ -36,17 +35,7 @@ export interface CategoryGroupView {
   totalPlan: number;
 }
 
-export interface ObligatoryPaymentView {
-  id: string;
-  name: string;
-  amount: number;
-  dayOfMonth: number;
-  dueDate: string;
-  isDue: boolean;
-}
-
 export interface DashboardViewModel {
   freeMoney: FreeMoneyView;
   spendingGroups: CategoryGroupView[];
-  obligatoryPayments: ObligatoryPaymentView[];
 }

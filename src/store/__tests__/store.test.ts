@@ -13,7 +13,7 @@ function resetStore() {
     nextIncomeDate: '',
     expectedMonthlyIncome: 0,
     todayFlexibleSpent: 0,
-    obligatoryPayments: [],
+    monthStates: [],
   });
 }
 
@@ -49,9 +49,9 @@ describe('Zustand store', () => {
     expect(keys).toContain('addAccount');
     expect(keys).toContain('updateAccount');
     expect(keys).toContain('deleteAccount');
-    expect(keys).toContain('addObligatoryPayment');
-    expect(keys).toContain('updateObligatoryPayment');
-    expect(keys).toContain('deleteObligatoryPayment');
+    expect(keys).toContain('setCategoryAssigned');
+    expect(keys).toContain('setToBeBudgeted');
+    expect(keys).toContain('addIncomeToTBB');
   });
 
   it('returns JSON-serializable state', () => {
@@ -99,7 +99,7 @@ describe('Zustand store', () => {
 
   it('restores state from JSON', () => {
     const json = JSON.stringify({
-      accounts: [{ id: 'a1', name: 'Test', type: 'debit', includeInCashBalance: true, currentBalance: 50000 }],
+      accounts: [{ id: 'a1', name: 'Test', type: 'debit', onBudget: true, currentBalance: 50000 }],
       transactions: [],
       categories: [],
       importBatches: [],
@@ -127,7 +127,7 @@ describe('Zustand store', () => {
     useStore.getState().addAccount({
       name: 'Credit Card',
       type: 'credit',
-      includeInCashBalance: true,
+      onBudget: true,
       currentBalance: -5000,
       creditLimit: 500000,
     });
@@ -140,7 +140,7 @@ describe('Zustand store', () => {
 
   it('updates an account', () => {
     useStore.setState({
-      accounts: [{ id: 'a1', name: 'Old', type: 'credit', includeInCashBalance: true, currentBalance: 1000 }],
+      accounts: [{ id: 'a1', name: 'Old', type: 'credit', onBudget: true, currentBalance: 1000 }],
     });
     useStore.getState().updateAccount('a1', { currentBalance: 5000, creditLimit: 10000 });
     expect(useStore.getState().accounts[0].currentBalance).toBe(5000);
@@ -149,7 +149,7 @@ describe('Zustand store', () => {
 
   it('deletes an account and its transactions', () => {
     useStore.setState({
-      accounts: [{ id: 'a1', name: 'X', type: 'debit', includeInCashBalance: true, currentBalance: 0 }],
+      accounts: [{ id: 'a1', name: 'X', type: 'debit', onBudget: true, currentBalance: 0 }],
       transactions: [
         { id: 'tx1', date: '2026-01-01', description: 'A', amount: 100, accountId: 'a1' },
         { id: 'tx2', date: '2026-01-01', description: 'B', amount: 200, accountId: 'a2' },
@@ -244,36 +244,183 @@ describe('Zustand store', () => {
     expect(useStore.getState().categoryGroups).toEqual(seedData.categoryGroups);
   });
 
-  it('adds an obligatory payment', () => {
-    useStore.getState().addObligatoryPayment({ name: 'Ипотека', amount: 82000, dayOfMonth: 12 });
-    const s = useStore.getState();
-    expect(s.obligatoryPayments).toHaveLength(1);
-    expect(s.obligatoryPayments[0].name).toBe('Ипотека');
-    expect(s.obligatoryPayments[0].amount).toBe(82000);
-    expect(s.obligatoryPayments[0].dayOfMonth).toBe(12);
-  });
-
-  it('updates an obligatory payment', () => {
-    useStore.getState().addObligatoryPayment({ name: 'Ипотека', amount: 82000, dayOfMonth: 12 });
-    const id = useStore.getState().obligatoryPayments[0].id;
-    useStore.getState().updateObligatoryPayment(id, { amount: 80000 });
-    expect(useStore.getState().obligatoryPayments[0].amount).toBe(80000);
-  });
-
-  it('deletes an obligatory payment', () => {
-    useStore.getState().addObligatoryPayment({ name: 'Ипотека', amount: 82000, dayOfMonth: 12 });
-    const id = useStore.getState().obligatoryPayments[0].id;
-    useStore.getState().deleteObligatoryPayment(id);
-    expect(useStore.getState().obligatoryPayments).toHaveLength(0);
-  });
-
-  it('restoreFromJSON restores obligatoryPayments', () => {
-    const json = JSON.stringify({
-      accounts: [],
-      obligatoryPayments: [{ id: 'obl-1', name: 'Ипотека', amount: 82000, dayOfMonth: 12 }],
+  it('setCategoryAssigned updates a category assignment for a month', () => {
+    useStore.setState({
+      monthStates: [
+        { month: '2026-06', categoryAssignments: {}, categoryCarryover: {}, toBeBudgeted: 0 },
+      ],
     });
-    useStore.getState().restoreFromJSON(json);
-    expect(useStore.getState().obligatoryPayments).toHaveLength(1);
-    expect(useStore.getState().obligatoryPayments[0].name).toBe('Ипотека');
+    useStore.getState().setCategoryAssigned('2026-06', 'cat-1', 50000);
+    const ms = useStore.getState().monthStates[0];
+    expect(ms.categoryAssignments['cat-1']).toBe(50000);
+  });
+
+  it('setCategoryAssigned updates existing assignment', () => {
+    useStore.setState({
+      monthStates: [
+        { month: '2026-06', categoryAssignments: { 'cat-1': 30000 }, categoryCarryover: {}, toBeBudgeted: 0 },
+      ],
+    });
+    useStore.getState().setCategoryAssigned('2026-06', 'cat-1', 45000);
+    expect(useStore.getState().monthStates[0].categoryAssignments['cat-1']).toBe(45000);
+  });
+
+  it('setToBeBudgeted updates TBB', () => {
+    useStore.setState({
+      monthStates: [
+        { month: '2026-06', categoryAssignments: {}, categoryCarryover: {}, toBeBudgeted: 0 },
+      ],
+    });
+    useStore.getState().setToBeBudgeted('2026-06', 100000);
+    expect(useStore.getState().monthStates[0].toBeBudgeted).toBe(100000);
+  });
+
+  it('addIncomeToTBB adds to existing TBB', () => {
+    useStore.setState({
+      monthStates: [
+        { month: '2026-06', categoryAssignments: {}, categoryCarryover: {}, toBeBudgeted: 50000 },
+      ],
+    });
+    useStore.getState().addIncomeToTBB(212000, '2026-06');
+    expect(useStore.getState().monthStates[0].toBeBudgeted).toBe(262000);
+  });
+
+  it('monthState actions do not affect other months', () => {
+    useStore.setState({
+      monthStates: [
+        { month: '2026-05', categoryAssignments: { 'cat-1': 100 }, categoryCarryover: {}, toBeBudgeted: 0 },
+        { month: '2026-06', categoryAssignments: {}, categoryCarryover: {}, toBeBudgeted: 0 },
+      ],
+    });
+    useStore.getState().setCategoryAssigned('2026-06', 'cat-1', 50000);
+    expect(useStore.getState().monthStates.find((m) => m.month === '2026-05')!.categoryAssignments['cat-1']).toBe(100);
+  });
+
+  // AICODE-NOTE: MIGRATION_V5 tests
+  it('migration v5 converts ObligatoryPayment to Category and creates MonthState', () => {
+    // Simulate old state with obligatoryPayments
+    useStore.setState({
+      accounts: [
+        { id: 'a1', name: 'Debit', type: 'debit', onBudget: true, currentBalance: 100000 },
+      ],
+      categories: [
+        { id: 'cat-1', name: 'Продукты', plan: 60000, groupId: 'group-obligatory', sortOrder: 0 },
+      ],
+      categoryGroups: [
+        { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0 },
+      ],
+      monthStates: [],
+      transactions: [],
+      importBatches: [],
+      rules: [],
+      bankMappings: [],
+      nextIncomeDate: '',
+      expectedMonthlyIncome: 0,
+      todayFlexibleSpent: 0,
+    });
+    // Verify no obligatoryPayments in state
+    const state = useStore.getState();
+    expect(state.monthStates).toHaveLength(0);
+    expect(state.accounts[0].onBudget).toBe(true);
+  });
+
+  it('addAccount creates payment category for credit accounts', () => {
+    useStore.getState().addAccount({
+      name: 'Новая Карта',
+      type: 'credit',
+      onBudget: true,
+      currentBalance: 0,
+    });
+
+    const accounts = useStore.getState().accounts;
+    const cc = accounts.find((a) => a.name === 'Новая Карта')!;
+    expect(cc).toBeDefined();
+
+    const categories = useStore.getState().categories;
+    const paymentCat = categories.find((c) => c.id === `cc-payment-${cc.id}`)!;
+    expect(paymentCat).toBeDefined();
+    expect(paymentCat.name).toBe('Оплата: Новая Карта');
+    expect(paymentCat.groupId).toBe('group-cc-payments');
+  });
+
+  it('addAccount does NOT create payment category for debit accounts', () => {
+    useStore.getState().addAccount({
+      name: 'Дебетовый',
+      type: 'debit',
+      onBudget: true,
+      currentBalance: 10000,
+    });
+
+    const categories = useStore.getState().categories;
+    expect(categories.length).toBe(0);
+  });
+
+  it('addAccount does NOT create payment category for off-budget credit', () => {
+    useStore.getState().addAccount({
+      name: 'Off Credit',
+      type: 'credit',
+      onBudget: false,
+      currentBalance: -5000,
+    });
+
+    const categories = useStore.getState().categories;
+    expect(categories.length).toBe(0);
+  });
+
+  it('deleteAccount cascades to CC payment category', () => {
+    useStore.setState({
+      accounts: [{ id: 'a-cc', name: 'Кредитка', type: 'credit', onBudget: true, currentBalance: -5000 }],
+      categories: [{ id: 'cc-payment-a-cc', name: 'Оплата: Кредитка', plan: 0, groupId: 'group-cc-payments', sortOrder: 0 }],
+    });
+
+    useStore.getState().deleteAccount('a-cc');
+    expect(useStore.getState().accounts).toHaveLength(0);
+    expect(useStore.getState().categories).toHaveLength(0);
+  });
+
+  it('commitImport adds positive transactions to TBB for current month', () => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    useStore.setState({
+      monthStates: [
+        { month: currentMonth, categoryAssignments: {}, categoryCarryover: {}, toBeBudgeted: 0 },
+      ],
+    });
+
+    const incomeTxns = [
+      { date: '2026-06-20', description: 'Зарплата', amount: 212000, accountId: 'a-debit' },
+    ];
+
+    useStore.getState().commitImport(incomeTxns, {
+      date: '2026-06-20',
+      filename: 'test.xlsx',
+      transactionCount: 1,
+      status: 'completed',
+    });
+
+    const ms = useStore.getState().monthStates.find((m) => m.month === currentMonth);
+    expect(ms?.toBeBudgeted).toBe(212000);
+  });
+
+  it('commitImport does not add negative txns to TBB', () => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    useStore.setState({
+      monthStates: [
+        { month: currentMonth, categoryAssignments: {}, categoryCarryover: {}, toBeBudgeted: 10000 },
+      ],
+    });
+
+    const txns = [
+      { date: '2026-06-20', description: 'Расход', amount: -5000, accountId: 'a-debit' },
+    ];
+
+    useStore.getState().commitImport(txns, {
+      date: '2026-06-20',
+      filename: 'test.xlsx',
+      transactionCount: 1,
+      status: 'completed',
+    });
+
+    const ms = useStore.getState().monthStates.find((m) => m.month === currentMonth);
+    expect(ms?.toBeBudgeted).toBe(10000);
   });
 });

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { DenezhkaStore, Transaction, Category, CategoryGroup, Account, CategorizationRule, ImportBatch, BankMapping, ObligatoryPayment } from './types';
+import type { DenezhkaStore, Transaction, Category, CategoryGroup, Account, CategorizationRule, ImportBatch, BankMapping } from './types';
 import { seedData } from './seed';
 import { normalizeDateField } from '../domain/import/excelDate';
 import { applyRules } from '../domain/categorization/applyRules';
@@ -60,9 +60,25 @@ export const useStore = create<DenezhkaStore>()(
           return { ...t, id: generateId(), importBatchId: id };
         });
         const fullBatch: ImportBatch = { ...batch, id };
-        set({
-          transactions: [...get().transactions, ...txns],
-          importBatches: [...get().importBatches, fullBatch],
+
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const positiveTxns = transactions.filter((t) => t.amount > 0);
+        const totalIncome = positiveTxns.reduce((s, t) => s + t.amount, 0);
+
+        set((state) => {
+          const updatedMonthStates = totalIncome > 0
+            ? state.monthStates.map((ms) =>
+                ms.month === currentMonth
+                  ? { ...ms, toBeBudgeted: ms.toBeBudgeted + totalIncome }
+                  : ms
+              )
+            : state.monthStates;
+
+          return {
+            transactions: [...state.transactions, ...txns],
+            importBatches: [...state.importBatches, fullBatch],
+            monthStates: updatedMonthStates,
+          };
         });
       },
 
@@ -154,7 +170,19 @@ export const useStore = create<DenezhkaStore>()(
 
       addAccount: (account: Omit<Account, 'id'>) => {
         const newAccount: Account = { ...account, id: generateId() };
-        set({ accounts: [...get().accounts, newAccount] });
+        if (account.type === 'credit' && account.onBudget) {
+          const ccCatId = `cc-payment-${newAccount.id}`;
+          const ccCat: Category = {
+            id: ccCatId,
+            name: `Оплата: ${account.name}`,
+            plan: 0,
+            groupId: 'group-cc-payments',
+            sortOrder: get().categories.filter((c) => c.groupId === 'group-cc-payments').length,
+          };
+          set({ accounts: [...get().accounts, newAccount], categories: [...get().categories, ccCat] });
+        } else {
+          set({ accounts: [...get().accounts, newAccount] });
+        }
       },
 
       updateAccount: (id: string, updates: Partial<Account>) => {
@@ -166,9 +194,11 @@ export const useStore = create<DenezhkaStore>()(
       },
 
       deleteAccount: (id: string) => {
+        const ccPaymentCatId = `cc-payment-${id}`;
         set({
           accounts: get().accounts.filter((a) => a.id !== id),
           transactions: get().transactions.filter((t) => t.accountId !== id),
+          categories: get().categories.filter((c) => c.id !== ccPaymentCatId),
         });
       },
 
@@ -219,23 +249,45 @@ export const useStore = create<DenezhkaStore>()(
         });
       },
 
-      addObligatoryPayment: (payment: Omit<ObligatoryPayment, 'id'>) => {
-        const newPayment: ObligatoryPayment = { ...payment, id: generateId() };
-        set({ obligatoryPayments: [...get().obligatoryPayments, newPayment] });
-      },
-
-      updateObligatoryPayment: (id: string, updates: Partial<ObligatoryPayment>) => {
+      setCategoryAssigned: (month: string, categoryId: string, amount: number) => {
         set({
-          obligatoryPayments: get().obligatoryPayments.map((p) =>
-            p.id === id ? { ...p, ...updates } : p,
+          monthStates: get().monthStates.map((ms) =>
+            ms.month === month
+              ? { ...ms, categoryAssignments: { ...ms.categoryAssignments, [categoryId]: amount } }
+              : ms
           ),
         });
       },
 
-      deleteObligatoryPayment: (id: string) => {
+      setToBeBudgeted: (month: string, amount: number) => {
         set({
-          obligatoryPayments: get().obligatoryPayments.filter((p) => p.id !== id),
+          monthStates: get().monthStates.map((ms) =>
+            ms.month === month ? { ...ms, toBeBudgeted: amount } : ms
+          ),
         });
+      },
+
+      addIncomeToTBB: (amount: number, month: string) => {
+        set({
+          monthStates: get().monthStates.map((ms) =>
+            ms.month === month ? { ...ms, toBeBudgeted: ms.toBeBudgeted + amount } : ms
+          ),
+        });
+      },
+
+      ensureCurrentMonthState: () => {
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        const { monthStates } = get();
+        if (!monthStates.some((ms) => ms.month === currentMonth)) {
+          set({
+            monthStates: [...monthStates, {
+              month: currentMonth,
+              categoryAssignments: {},
+              categoryCarryover: {},
+              toBeBudgeted: 0,
+            }],
+          });
+        }
       },
 
       restoreFromJSON: (json: string) => {
@@ -251,13 +303,13 @@ export const useStore = create<DenezhkaStore>()(
           nextIncomeDate: parsed.nextIncomeDate ?? get().nextIncomeDate,
           expectedMonthlyIncome: parsed.expectedMonthlyIncome ?? get().expectedMonthlyIncome,
           todayFlexibleSpent: parsed.todayFlexibleSpent ?? 0,
-          obligatoryPayments: parsed.obligatoryPayments ?? [],
+          monthStates: parsed.monthStates ?? [],
         });
       },
     }),
     {
       name: 'laveh-store',
-      version: 4,
+      version: 6,
       migrate: (state: unknown, version: number) => {
         const s = state as Record<string, unknown>;
         if (version < 1 && Array.isArray(s.transactions)) {
@@ -332,6 +384,84 @@ export const useStore = create<DenezhkaStore>()(
             { id: 'obl-2', name: 'Автокредит', amount: 34000, dayOfMonth: 25 },
           ];
         }
+        // AICODE-NOTE: MIGRATION_V5 converts ObligatoryPayment→Category, renames includeInCashBalance→onBudget, creates MonthState
+        if (version < 5) {
+          const oblPayments = (s.obligatoryPayments as Array<Record<string,unknown>>) ?? [];
+          const existingCats = (s.categories as Array<Record<string,unknown>>) ?? [];
+
+          let groups = (s.categoryGroups as Array<Record<string,unknown>>) ?? [];
+          let oblGroup = groups.find((g: Record<string,unknown>) => g.id === 'group-obligatory');
+          if (!oblGroup) {
+            oblGroup = { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0 };
+            groups = [oblGroup, ...groups];
+          }
+
+          let oblSortOrder = 0;
+          for (const p of oblPayments) {
+            const catName = String(p.name ?? '');
+            const exists = existingCats.some((c: Record<string,unknown>) =>
+              String(c.name ?? '').toLowerCase() === catName.toLowerCase()
+            );
+            if (!exists) {
+              existingCats.push({
+                id: `migrated-obl-${oblSortOrder}`,
+                name: catName,
+                plan: Number(p.amount ?? 0),
+                groupId: 'group-obligatory',
+                sortOrder: oblSortOrder++,
+              });
+            }
+          }
+
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          s.monthStates = [{
+            month: currentMonth,
+            categoryAssignments: {},
+            categoryCarryover: {},
+            toBeBudgeted: 0,
+          }];
+
+          delete s.obligatoryPayments;
+          s.categoryGroups = groups;
+          s.categories = existingCats;
+
+          if (Array.isArray(s.accounts)) {
+            s.accounts = (s.accounts as Array<Record<string,unknown>>).map((acc) => {
+              const { includeInCashBalance, ...rest } = acc;
+              return { ...rest, onBudget: includeInCashBalance ?? true };
+            });
+          }
+        }
+        // AICODE-NOTE: MIGRATION_V6 ensures group-cc-payments and auto-creates CC payment categories for existing credit accounts
+        if (version < 6) {
+          let groups = (s.categoryGroups as Array<Record<string, unknown>>) ?? [];
+          const hasCCGroup = groups.some((g) => g.id === 'group-cc-payments');
+          if (!hasCCGroup) {
+            groups = [...groups, { id: 'group-cc-payments', name: 'Оплата карт', sortOrder: 99 }];
+          }
+
+          const accounts = (s.accounts as Array<Record<string, unknown>>) ?? [];
+          const categories = (s.categories as Array<Record<string, unknown>>) ?? [];
+
+          for (const acc of accounts) {
+            if (acc.type === 'credit' && acc.onBudget) {
+              const ccCatId = `cc-payment-${acc.id}`;
+              const exists = categories.some((c) => String(c.id ?? '') === ccCatId);
+              if (!exists) {
+                categories.push({
+                  id: ccCatId,
+                  name: `Оплата: ${acc.name}`,
+                  plan: 0,
+                  groupId: 'group-cc-payments',
+                  sortOrder: 0,
+                });
+              }
+            }
+          }
+
+          s.categoryGroups = groups;
+          s.categories = categories;
+        }
         return s as unknown as typeof seedData;
       },
       partialize: (state) => ({
@@ -345,7 +475,7 @@ export const useStore = create<DenezhkaStore>()(
         nextIncomeDate: state.nextIncomeDate,
         expectedMonthlyIncome: state.expectedMonthlyIncome,
         todayFlexibleSpent: state.todayFlexibleSpent,
-        obligatoryPayments: state.obligatoryPayments,
+        monthStates: state.monthStates,
       }),
     },
   ),

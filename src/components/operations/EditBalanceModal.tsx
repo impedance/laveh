@@ -28,13 +28,13 @@ export default function EditBalanceModal({ onClose }: Props) {
   };
 
   const debitAccounts = storeAccounts.filter(
-    (a) => a.type === 'debit' && a.includeInCashBalance,
+    (a) => a.type === 'debit' && a.onBudget,
   );
   const creditAccounts = storeAccounts.filter(
-    (a) => a.type === 'credit' && a.includeInCashBalance,
+    (a) => a.type === 'credit' && a.onBudget,
   );
   const excludedAccounts = storeAccounts.filter(
-    (a) => !a.includeInCashBalance,
+    (a) => !a.onBudget,
   );
 
   const currentTotal =

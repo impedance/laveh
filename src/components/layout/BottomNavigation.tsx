@@ -6,7 +6,7 @@ interface Props {
 const tabs = [
   { key: 'home', label: 'Главная' },
   { key: 'operations', label: 'Операции' },
-  { key: 'plan', label: 'План' },
+  { key: 'plan', label: 'Бюджет' },
   { key: 'import', label: 'Импорт' },
 ];
 
