@@ -4,6 +4,7 @@ import HomePage from '../pages/HomePage';
 import OperationsPage from '../pages/OperationsPage';
 import BudgetPage from '../pages/BudgetPage';
 import ImportPage from '../pages/ImportPage';
+import GoalsPage from '../pages/GoalsPage';
 
 export default function App() {
   const [tab, setTab] = useState('home');
@@ -26,6 +27,7 @@ export default function App() {
   switch (tab) {
     case 'operations': page = <OperationsPage onTabChange={setTab} />; break;
     case 'plan': page = <BudgetPage onTabChange={setTab} />; break;
+    case 'goals': page = <GoalsPage onTabChange={setTab} />; break;
     case 'import': page = <ImportPage onTabChange={setTab} />; break;
     default: page = <HomePage onTabChange={setTab} />; break;
   }

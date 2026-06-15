@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useStore } from '../index';
+import { useStore, migrateStoreState } from '../index';
 import { seedData } from '../seed';
 
 function resetStore() {
@@ -422,5 +422,47 @@ describe('Zustand store', () => {
 
     const ms = useStore.getState().monthStates.find((m) => m.month === currentMonth);
     expect(ms?.toBeBudgeted).toBe(10000);
+  });
+
+  it('adds transaction and updates account balance', () => {
+    useStore.setState({
+      accounts: [{ id: 'a1', name: 'Cash', type: 'debit', onBudget: true, currentBalance: 1000 }],
+    });
+    useStore.getState().addTransaction({
+      date: '2026-06-10',
+      description: 'Groceries',
+      amount: -300,
+      accountId: 'a1',
+    });
+    expect(useStore.getState().accounts[0].currentBalance).toBe(700);
+    expect(useStore.getState().transactions[0].amount).toBe(-300);
+  });
+
+  it('adds income transaction and updates toBeBudgeted if category is empty', () => {
+    useStore.setState({
+      accounts: [{ id: 'a1', name: 'Cash', type: 'debit', onBudget: true, currentBalance: 1000 }],
+      monthStates: [{ month: '2026-06', categoryAssignments: {}, categoryCarryover: {}, toBeBudgeted: 0 }],
+    });
+    useStore.getState().addTransaction({
+      date: '2026-06-10',
+      description: 'Salary',
+      amount: 50000,
+      accountId: 'a1',
+    });
+    expect(useStore.getState().accounts[0].currentBalance).toBe(51000);
+    expect(useStore.getState().monthStates[0].toBeBudgeted).toBe(50000);
+  });
+
+  it('migration v7 sets categoryGroups type to sinking_fund for reserves and regular for others', () => {
+    const migrated = migrateStoreState({
+      categoryGroups: [
+        { id: 'group-reserves', name: 'Резервы', sortOrder: 3 },
+        { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0 },
+      ],
+    }, 6);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(migrated.categoryGroups.find((g: any) => g.id === 'group-reserves').type).toBe('sinking_fund');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(migrated.categoryGroups.find((g: any) => g.id === 'group-obligatory').type).toBe('regular');
   });
 });

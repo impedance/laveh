@@ -4,6 +4,7 @@ import { calculateBudget } from '../domain/budget/calculateBudget';
 import type { BudgetInput } from '../domain/budget/types';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
+import QuickActions from '../components/operations/QuickActions';
 
 interface Props {
   onTabChange: (tab: string) => void;
@@ -43,13 +44,17 @@ export default function BudgetPage({ onTabChange }: Props) {
   );
 
   const editableGroups = useMemo(
-    () => sortedGroups.filter((g) => g.id !== 'group-cc-payments'),
+    () => sortedGroups.filter((g) => g.id !== 'group-cc-payments' && g.type !== 'sinking_fund'),
     [sortedGroups],
   );
 
   const visibleCategoryGroups = useMemo(
-    () => vm.categoryGroups.filter((g) => g.id !== 'group-cc-payments'),
-    [vm.categoryGroups],
+    () => vm.categoryGroups.filter((g) => {
+      if (g.id === 'group-cc-payments') return false;
+      const dbGroup = store.categoryGroups.find((cg) => cg.id === g.id);
+      return dbGroup?.type !== 'sinking_fund';
+    }),
+    [vm.categoryGroups, store.categoryGroups],
   );
 
   const handleAssignChange = (categoryId: string, newAssigned: number) => {
@@ -110,13 +115,13 @@ export default function BudgetPage({ onTabChange }: Props) {
 
   const handleAddGroup = () => {
     if (!newGroupName.trim()) return;
-    store.upsertGroup({ name: newGroupName.trim() });
+    store.upsertGroup({ name: newGroupName.trim(), type: 'regular' });
     setNewGroupName('');
   };
 
   const handleRenameGroup = (id: string) => {
     if (!editGroupName.trim()) return;
-    store.upsertGroup({ id, name: editGroupName.trim() });
+    store.upsertGroup({ id, name: editGroupName.trim(), type: 'regular' });
     setEditingGroupId(null);
   };
 
@@ -656,6 +661,8 @@ export default function BudgetPage({ onTabChange }: Props) {
           </div>
         </section>
       </div>
+
+      <QuickActions />
 
       <div className="mt-[14px]">
         <BottomNavigation activeTab="plan" onTabChange={onTabChange} />

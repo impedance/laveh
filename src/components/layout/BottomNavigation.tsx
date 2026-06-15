@@ -7,6 +7,7 @@ const tabs = [
   { key: 'home', label: 'Главная' },
   { key: 'operations', label: 'Операции' },
   { key: 'plan', label: 'Бюджет' },
+  { key: 'goals', label: 'Цели' },
   { key: 'import', label: 'Импорт' },
 ];
 

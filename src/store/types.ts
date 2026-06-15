@@ -46,6 +46,7 @@ export interface CategoryGroup {
   id: string;
   name: string;
   sortOrder: number;
+  type?: 'regular' | 'sinking_fund';
 }
 
 export interface Category {

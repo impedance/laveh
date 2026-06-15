@@ -9,6 +9,7 @@ import BudgetGroupsCard from '../components/cards/BudgetGroupsCard';
 import CreditCardPaymentsCard from '../components/cards/CreditCardPaymentsCard';
 import ReviewQueue from '../components/operations/ReviewQueue';
 import EditBalanceModal from '../components/operations/EditBalanceModal';
+import QuickActions from '../components/operations/QuickActions';
 
 interface Props {
   onTabChange: (tab: string) => void;
@@ -39,6 +40,14 @@ export default function HomePage({ onTabChange }: Props) {
     return calculateBudget(input);
   }, [store.accounts, store.transactions, store.categories, store.categoryGroups, store.monthStates]);
 
+  const regularGroups = useMemo(() => {
+    return vm.categoryGroups.filter((g) => {
+      if (g.id === 'group-cc-payments') return false;
+      const dbGroup = store.categoryGroups.find((cg) => cg.id === g.id);
+      return dbGroup?.type !== 'sinking_fund';
+    });
+  }, [vm.categoryGroups, store.categoryGroups]);
+
   return (
     <AppLayout>
       <div className="mb-[14px] flex items-center justify-between">
@@ -60,9 +69,11 @@ export default function HomePage({ onTabChange }: Props) {
           onAssign={() => onTabChange('plan')}
           onEditBalance={() => setShowEditBalance(true)}
         />
-        <BudgetGroupsCard groups={vm.categoryGroups} />
+        <BudgetGroupsCard groups={regularGroups} />
         <CreditCardPaymentsCard payments={vm.creditCardPayments} />
       </div>
+
+      <QuickActions />
 
       <div className="mt-[14px]">
         <BottomNavigation activeTab="home" onTabChange={onTabChange} />
