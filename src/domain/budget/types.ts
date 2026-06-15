@@ -39,10 +39,11 @@ export interface BudgetViewModel {
   toBeBudgeted: number;
   totalIncome: number;
   totalAssigned: number;
+  totalAssignedAll: number; // sum of all category + CC assignments (for hero subtitle)
   totalActivity: number;
   ownMoney: number;
   totalDebt: number;
-  freeMoney: number;
+  freeMoney: number; // = toBeBudgeted (YNAB envelope model)
   categoryGroups: BudgetGroupView[];
   creditCardPayments: CreditCardPaymentView[];
 }

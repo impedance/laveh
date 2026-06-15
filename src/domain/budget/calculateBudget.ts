@@ -184,16 +184,18 @@ export function calculateBudget(input: BudgetInput): BudgetViewModel {
 
   const toBeBudgeted = monthState.toBeBudgeted;
 
-  // AICODE-NOTE: freeMoney excludes sinking_fund groups — those are user's choice, not obligations
-  const freeMoney = ownMoney - groupViews
-    .filter((g) => g.type === 'obligatory' || g.type === 'regular')
-    .reduce((sum, g) => sum + g.totalPlan, 0);
+  // AICODE-NOTE: freeMoney = toBeBudgeted = income minus all assignments (YNAB envelope model)
+  // Transfers between accounts do NOT affect this value — only income and category assignments do.
+  const freeMoney = toBeBudgeted;
+
+  const totalAssignedAll = totalAssigned;
 
   return {
     month,
     toBeBudgeted,
     totalIncome,
     totalAssigned,
+    totalAssignedAll,
     totalActivity,
     ownMoney,
     totalDebt,

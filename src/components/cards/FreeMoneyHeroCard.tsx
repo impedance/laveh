@@ -1,16 +1,22 @@
 interface Props {
-  freeMoney: number;
-  ownMoney: number;
+  freeMoney: number;       // = toBeBudgeted
+  totalAssigned: number;   // how much has been assigned this month
+  totalIncome: number;     // income received this month
   onEditBalance?: () => void;
 }
 
-export default function FreeMoneyHeroCard({ freeMoney, ownMoney, onEditBalance }: Props) {
+export default function FreeMoneyHeroCard({
+  freeMoney,
+  totalAssigned,
+  totalIncome,
+  onEditBalance,
+}: Props) {
   const isPositive = freeMoney >= 0;
 
   return (
     <section className="rounded-[18px] border-t-2 border-t-[#58d68d] bg-[#121821] p-[18px]">
       <div className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#75b8ff]">
-        Свободно сейчас
+        Свободно
       </div>
 
       <div
@@ -22,8 +28,10 @@ export default function FreeMoneyHeroCard({ freeMoney, ownMoney, onEditBalance }
       </div>
 
       <div className="mb-4 text-xs text-[#8795a5]">
-        после всех обязательств · баланс:{' '}
-        <span className="text-[#eef4f8]">{ownMoney.toLocaleString('ru-RU')} ₽</span>
+        Распределено{' '}
+        <span className="text-[#eef4f8]">{totalAssigned.toLocaleString('ru-RU')}</span>
+        {' '}из{' '}
+        <span className="text-[#eef4f8]">{totalIncome.toLocaleString('ru-RU')} ₽</span>
       </div>
 
       {onEditBalance && (
