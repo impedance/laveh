@@ -95,6 +95,7 @@ function buildGroupViews(
         id: group.id,
         name: group.name,
         sortOrder: group.sortOrder,
+        type: group.type,
         categories: catViews,
         totalPlan,
         totalAssigned,
@@ -183,6 +184,11 @@ export function calculateBudget(input: BudgetInput): BudgetViewModel {
 
   const toBeBudgeted = monthState.toBeBudgeted;
 
+  // AICODE-NOTE: freeMoney excludes sinking_fund groups — those are user's choice, not obligations
+  const freeMoney = ownMoney - groupViews
+    .filter((g) => g.type === 'obligatory' || g.type === 'regular')
+    .reduce((sum, g) => sum + g.totalPlan, 0);
+
   return {
     month,
     toBeBudgeted,
@@ -191,6 +197,7 @@ export function calculateBudget(input: BudgetInput): BudgetViewModel {
     totalActivity,
     ownMoney,
     totalDebt,
+    freeMoney,
     categoryGroups: groupViews,
     creditCardPayments: ccPaymentViews,
   };

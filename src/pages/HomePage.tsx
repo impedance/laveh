@@ -4,7 +4,7 @@ import { calculateBudget } from '../domain/budget/calculateBudget';
 import type { BudgetInput } from '../domain/budget/types';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
-import ReadyToAssignHeroCard from '../components/cards/ReadyToAssignHeroCard';
+import FreeMoneyHeroCard from '../components/cards/FreeMoneyHeroCard';
 import BudgetGroupsCard from '../components/cards/BudgetGroupsCard';
 import CreditCardPaymentsCard from '../components/cards/CreditCardPaymentsCard';
 import ReviewQueue from '../components/operations/ReviewQueue';
@@ -40,20 +40,21 @@ export default function HomePage({ onTabChange }: Props) {
     return calculateBudget(input);
   }, [store.accounts, store.transactions, store.categories, store.categoryGroups, store.monthStates]);
 
-  const regularGroups = useMemo(() => {
-    return vm.categoryGroups.filter((g) => {
-      if (g.id === 'group-cc-payments') return false;
-      const dbGroup = store.categoryGroups.find((cg) => cg.id === g.id);
-      return dbGroup?.type !== 'sinking_fund';
-    });
-  }, [vm.categoryGroups, store.categoryGroups]);
+  // Exclude credit-card payment group from the groups card
+  const displayGroups = useMemo(() => {
+    return vm.categoryGroups.filter((g) => g.id !== 'group-cc-payments');
+  }, [vm.categoryGroups]);
+
+  const currentMonth = new Date().toLocaleString('ru-RU', { month: 'long' });
 
   return (
     <AppLayout>
       <div className="mb-[14px] flex items-center justify-between">
         <div>
           <strong className="block text-lg tracking-[-0.02em] text-[#eef4f8]">Laveh</strong>
-          <span className="mt-0.5 block text-xs text-[#8795a5]">Финансовая навигация · июнь</span>
+          <span className="mt-0.5 block text-xs text-[#8795a5]">
+            Финансовая навигация · {currentMonth}
+          </span>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#75b8ff] text-sm font-bold text-[#090d12]">
           M
@@ -62,14 +63,15 @@ export default function HomePage({ onTabChange }: Props) {
 
       <div className="flex flex-col gap-[14px]">
         <ReviewQueue />
-        <ReadyToAssignHeroCard
-          toBeBudgeted={vm.toBeBudgeted}
+
+        <FreeMoneyHeroCard
+          freeMoney={vm.freeMoney}
           ownMoney={vm.ownMoney}
-          totalDebt={vm.totalDebt}
-          onAssign={() => onTabChange('plan')}
           onEditBalance={() => setShowEditBalance(true)}
         />
-        <BudgetGroupsCard groups={regularGroups} />
+
+        <BudgetGroupsCard groups={displayGroups} />
+
         <CreditCardPaymentsCard payments={vm.creditCardPayments} />
       </div>
 

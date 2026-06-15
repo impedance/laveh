@@ -13,8 +13,8 @@ export const seedData: StoreState = {
     { id: 'cat-3', name: 'Транспорт', plan: 20000, groupId: 'group-regular', sortOrder: 1 },
   ],
   categoryGroups: [
-    { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0 },
-    { id: 'group-regular', name: 'Регулярные', sortOrder: 1 },
+    { id: 'group-obligatory', name: 'Обязательные', sortOrder: 0, type: 'obligatory' },
+    { id: 'group-regular', name: 'Регулярные', sortOrder: 1, type: 'regular' },
     { id: 'group-fun', name: 'Отдых', sortOrder: 2 },
     { id: 'group-reserves', name: 'Резервы', sortOrder: 3 },
     { id: 'group-debts', name: 'Долги', sortOrder: 4 },

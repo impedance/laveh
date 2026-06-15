@@ -13,6 +13,7 @@ export interface BudgetGroupView {
   id: string;
   name: string;
   sortOrder: number;
+  type?: 'obligatory' | 'regular' | 'sinking_fund';
   categories: BudgetCategoryView[];
   totalPlan: number;
   totalAssigned: number;
@@ -41,6 +42,7 @@ export interface BudgetViewModel {
   totalActivity: number;
   ownMoney: number;
   totalDebt: number;
+  freeMoney: number;
   categoryGroups: BudgetGroupView[];
   creditCardPayments: CreditCardPaymentView[];
 }
