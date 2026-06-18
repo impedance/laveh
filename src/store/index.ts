@@ -496,6 +496,24 @@ export const useStore = create<DenezhkaStore>()(
         }
       },
 
+      coverOverspending: (month: string, sourceCategoryId: string, targetCategoryId: string, amount: number) => {
+        set({
+          monthStates: get().monthStates.map((ms) => {
+            if (ms.month !== month) return ms;
+            const currentSource = ms.categoryAssignments[sourceCategoryId] ?? 0;
+            const currentTarget = ms.categoryAssignments[targetCategoryId] ?? 0;
+            return {
+              ...ms,
+              categoryAssignments: {
+                ...ms.categoryAssignments,
+                [sourceCategoryId]: currentSource - amount,
+                [targetCategoryId]: currentTarget + amount,
+              },
+            };
+          }),
+        });
+      },
+
       restoreFromJSON: (json: string) => {
         const parsed = JSON.parse(json);
         set({

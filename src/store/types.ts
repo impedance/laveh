@@ -130,6 +130,7 @@ export interface StoreActions {
   setToBeBudgeted: (month: string, amount: number) => void;
   addIncomeToTBB: (amount: number, month: string) => void;
   ensureCurrentMonthState: () => void;
+  coverOverspending: (month: string, sourceCategoryId: string, targetCategoryId: string, amount: number) => void;
 }
 
 export type DenezhkaStore = StoreState & StoreActions;
