@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import HomePage from '../pages/HomePage';
 import OperationsPage from '../pages/OperationsPage';
-import BudgetPage from '../pages/BudgetPage';
+import PlanPage from '../pages/PlanPage';
+import AccountsPage from '../pages/AccountsPage';
 import ImportPage from '../pages/ImportPage';
-import GoalsPage from '../pages/GoalsPage';
 
 export default function App() {
   const [tab, setTab] = useState('home');
@@ -26,8 +26,8 @@ export default function App() {
   let page;
   switch (tab) {
     case 'operations': page = <OperationsPage onTabChange={setTab} />; break;
-    case 'plan': page = <BudgetPage onTabChange={setTab} />; break;
-    case 'goals': page = <GoalsPage onTabChange={setTab} />; break;
+    case 'accounts': page = <AccountsPage onTabChange={setTab} />; break;
+    case 'plan': page = <PlanPage onTabChange={setTab} />; break;
     case 'import': page = <ImportPage onTabChange={setTab} />; break;
     default: page = <HomePage onTabChange={setTab} />; break;
   }

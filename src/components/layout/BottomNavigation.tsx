@@ -4,10 +4,10 @@ interface Props {
 }
 
 const tabs = [
-  { key: 'home', label: 'Главная' },
+  { key: 'home', label: 'Бюджет' },
   { key: 'operations', label: 'Операции' },
-  { key: 'plan', label: 'Бюджет' },
-  { key: 'goals', label: 'Цели' },
+  { key: 'accounts', label: 'Счета' },
+  { key: 'plan', label: 'План' },
   { key: 'import', label: 'Импорт' },
 ];
 

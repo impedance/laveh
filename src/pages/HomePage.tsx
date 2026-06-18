@@ -1,15 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useStore } from '../store';
 import { calculateBudget } from '../domain/budget/calculateBudget';
 import type { BudgetInput } from '../domain/budget/types';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
-import AccountsSummaryCard from '../components/cards/AccountsSummaryCard';
 import FreeMoneyHeroCard from '../components/cards/FreeMoneyHeroCard';
 import BudgetGroupsCard from '../components/cards/BudgetGroupsCard';
 import CreditCardPaymentsCard from '../components/cards/CreditCardPaymentsCard';
-import ReviewQueue from '../components/operations/ReviewQueue';
-import EditBalanceModal from '../components/operations/EditBalanceModal';
 import QuickActions from '../components/operations/QuickActions';
 
 interface Props {
@@ -18,7 +15,6 @@ interface Props {
 
 export default function HomePage({ onTabChange }: Props) {
   const store = useStore();
-  const [showEditBalance, setShowEditBalance] = useState(false);
 
   const vm = useMemo(() => {
     const month = new Date().toISOString().slice(0, 7);
@@ -60,18 +56,11 @@ export default function HomePage({ onTabChange }: Props) {
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#75b8ff] text-sm font-bold text-[#090d12]">
           M
         </div>
-      </div>
-
-      <div className="flex flex-col gap-[14px]">
-        <ReviewQueue />
-
-        <AccountsSummaryCard accounts={store.accounts} />
-
+      </div>      <div className="flex flex-col gap-[14px]">
         <FreeMoneyHeroCard
           freeMoney={vm.freeMoney}
           totalAssigned={vm.totalAssignedAll}
           totalIncome={vm.totalIncome}
-          onEditBalance={() => setShowEditBalance(true)}
         />
 
         <BudgetGroupsCard groups={displayGroups} />
@@ -85,11 +74,6 @@ export default function HomePage({ onTabChange }: Props) {
         <BottomNavigation activeTab="home" onTabChange={onTabChange} />
       </div>
 
-      {showEditBalance && (
-        <EditBalanceModal
-          onClose={() => setShowEditBalance(false)}
-        />
-      )}
     </AppLayout>
   );
 }

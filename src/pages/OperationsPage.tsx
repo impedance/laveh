@@ -3,6 +3,7 @@ import { useStore } from '../store';
 import { applyRules } from '../domain/categorization/applyRules';
 import { applyBankMappings } from '../domain/categorization/applyBankMappings';
 import EditCategoryModal from '../components/operations/EditCategoryModal';
+import ReviewQueue from '../components/operations/ReviewQueue';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
 import type { Transaction } from '../store/types';
@@ -51,6 +52,10 @@ export default function OperationsPage({ onTabChange }: Props) {
   return (
     <AppLayout>
       <h2 className="mb-4 text-lg font-bold tracking-[-0.02em] text-[#eef4f8]">Операции</h2>
+
+      <div className="mb-[14px]">
+        <ReviewQueue />
+      </div>
 
       <section className="mb-[14px] rounded-[18px] bg-[#121821] p-[18px]">
         <div className="mb-3 grid grid-cols-2 gap-2">
