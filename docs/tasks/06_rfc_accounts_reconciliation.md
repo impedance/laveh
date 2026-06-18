@@ -1,10 +1,14 @@
-# RFC: Accounts Reconciliation
+# RFC 06: Accounts Reconciliation
 
-## 1. Objective
-Implement the "Reconcile" (Сверка баланса) feature in `AccountsPage.tsx`. This allows users to input their actual bank balance. If it differs from the app's calculated balance, a corrective transaction is automatically created to bridge the gap.
+## 1. Objective & UX Philosophy
+Implement the "Reconcile" feature in `AccountsPage.tsx`. 
+**UX Constraint:** Extremely utilitarian. A simple list of accounts with their calculated balances, and a clean numeric input for reconciliation. No visual clutter.
 
-## 2. TypeScript Contracts
+## 2. Domain Boundaries
+- **Ownership:** `src/domain/accounts/` and `src/components/accounts/`.
+- **Isolation:** Modifies `Account.currentBalance` and generates a single system `Transaction`. It must not touch budget categories or month states directly.
 
+## 3. TypeScript Contracts
 ```typescript
 // src/components/accounts/ReconcileModal.tsx
 export interface ReconcileModalProps {
@@ -16,25 +20,23 @@ export interface ReconcileModalProps {
 }
 ```
 
-## 3. State Management (Zustand)
-Add `reconcileAccount` action to `StoreActions`:
+## 4. State Management (Zustand)
 ```typescript
 reconcileAccount: (accountId: string, actualBalance: number) => void;
 ```
-
 *Logic:* 
-1. Find `account` by `accountId`. Calculate `delta = actualBalance - account.currentBalance`.
-2. If `delta !== 0`, create a new `Transaction`:
-   - `id`: generated UUID
-   - `accountId`: `accountId`
-   - `amount`: `delta`
-   - `description`: "Reconciliation Adjustment"
-   - `date`: Today's ISO date string
-   - `isReviewed`: true
-3. The store's derived state calculation will automatically absorb this transaction and correct the overall `account.currentBalance` and `toBeBudgeted` (if it's an on-budget debit account).
+`delta = actualBalance - account.currentBalance`.
+If `delta !== 0`, create a `Transaction` (amount: delta, description: "Reconciliation Adjustment", isReviewed: true). Update `account.currentBalance`.
 
-## 4. Blackbox Testing Strategy
-**Target File:** `src/store/__tests__/reconciliation.test.ts`
-- **Test 1:** Calling `reconcileAccount` with a balance $100 higher creates a +$100 transaction.
-- **Test 2:** Calling `reconcileAccount` with the same balance does nothing (no transaction created).
-- **Test 3:** Reconciliation of a Credit account correctly adjusts debt without inflating liquid cash.
+## 5. Blackbox Testing (Pareto)
+**Target:** `src/store/__tests__/reconciliation.test.ts`
+- **Test 1:** `reconcileAccount` with discrepancy generates exactly one adjustment transaction and matches the new balance.
+- **Test 2:** `reconcileAccount` with matching balance generates 0 transactions.
+
+## 6. Agent Feedback Loop
+**Pre-requisite for implementing Agent:**
+1. Run `make smoke && make preflight` BEFORE writing code.
+2. Implement TS contracts first, check via `npm run typecheck`.
+3. Write test, verify it fails.
+4. Implement logic.
+5. Run `make smoke && make preflight` AFTER completion to guarantee 0 regressions.
