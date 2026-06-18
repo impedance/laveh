@@ -4,30 +4,29 @@ import { useStore } from '../../store';
 interface Props {
   onClose: () => void;
   prefilledType?: 'income' | 'expense';
+  prefilledCategoryId?: string;
 }
 
-export default function AddTransactionModal({ onClose, prefilledType = 'expense' }: Props) {
+export default function AddTransactionModal({ onClose, prefilledType = 'expense', prefilledCategoryId }: Props) {
   const store = useStore();
-  const accounts = store.accounts.filter((a) => a.onBudget);
+  const allOnBudgetAccounts = store.accounts.filter((a) => a.onBudget);
   const categories = store.categories;
   const groups = store.categoryGroups;
 
   const [type, setType] = useState<'income' | 'expense'>(prefilledType);
   const [amount, setAmount] = useState<number | ''>('');
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [accountId, setAccountId] = useState<string>(accounts[0]?.id ?? '');
-  const [categoryId, setCategoryId] = useState<string>('');
+  const [accountId, setAccountId] = useState<string>(allOnBudgetAccounts[0]?.id ?? '');
+  const [categoryId, setCategoryId] = useState<string>(prefilledCategoryId ?? '');
   const [description, setDescription] = useState<string>('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Grouped categories for rendering
   const groupedCategories = useMemo(() => {
     return groups
       .map((g) => {
-        const groupCats = categories.filter((c) => c.groupId === g.id);
-        return {
-          ...g,
-          categories: groupCats,
-        };
+        const groupCats = categories.filter((c) => c.groupId === g.id && !c.id.startsWith('cc-payment-'));
+        return { ...g, categories: groupCats };
       })
       .filter((g) => g.categories.length > 0);
   }, [groups, categories]);
@@ -42,7 +41,6 @@ export default function AddTransactionModal({ onClose, prefilledType = 'expense'
       return;
     }
 
-    // Amount is negative for expense, positive for income
     const finalAmount = type === 'expense' ? -Number(amount) : Number(amount);
 
     store.addTransaction({
@@ -70,10 +68,7 @@ export default function AddTransactionModal({ onClose, prefilledType = 'expense'
         {/* Expense/Income Toggle */}
         <div className="mb-4 flex rounded-xl bg-[#171f2a] p-1">
           <button
-            onClick={() => {
-              setType('expense');
-              setCategoryId('');
-            }}
+            onClick={() => { setType('expense'); setCategoryId(''); }}
             className={`flex-1 rounded-lg py-2 text-center text-sm font-semibold transition-colors ${
               type === 'expense' ? 'bg-[#e74c3c] text-[#eef4f8]' : 'text-[#8795a5] hover:text-[#eef4f8]'
             }`}
@@ -81,10 +76,7 @@ export default function AddTransactionModal({ onClose, prefilledType = 'expense'
             Расход
           </button>
           <button
-            onClick={() => {
-              setType('income');
-              setCategoryId(''); // Inflow: To Be Budgeted
-            }}
+            onClick={() => { setType('income'); setCategoryId(''); }}
             className={`flex-1 rounded-lg py-2 text-center text-sm font-semibold transition-colors ${
               type === 'income' ? 'bg-[#58d68d] text-[#090d12]' : 'text-[#8795a5] hover:text-[#eef4f8]'
             }`}
@@ -107,36 +99,39 @@ export default function AddTransactionModal({ onClose, prefilledType = 'expense'
             />
           </div>
 
-          {/* Date */}
-          <div>
-            <label className="mb-1 block text-xs text-[#8795a5]">Дата</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-xl bg-[#171f2a] px-3 py-2 text-sm text-[#eef4f8] outline-none"
-            />
-          </div>
-
-          {/* Account */}
+          {/* Account chips — all on-budget accounts incl. credit cards */}
           <div>
             <label className="mb-1 block text-xs text-[#8795a5]">Счёт</label>
-            <select
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              className="w-full rounded-xl bg-[#171f2a] px-3 py-2 text-sm text-[#eef4f8] outline-none"
-            >
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>
-                  {acc.name} ({acc.currentBalance.toLocaleString('ru-RU')} ₽)
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-wrap gap-2">
+              {allOnBudgetAccounts.map((acc) => {
+                const isSelected = acc.id === accountId;
+                const isCredit = acc.type === 'credit';
+                return (
+                  <button
+                    key={acc.id}
+                    type="button"
+                    onClick={() => setAccountId(acc.id)}
+                    className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
+                      isSelected
+                        ? isCredit
+                          ? 'bg-[#e74c3c] text-[#eef4f8]'
+                          : 'bg-[#75b8ff] text-[#090d12]'
+                        : 'bg-[#171f2a] text-[#8795a5] hover:text-[#eef4f8]'
+                    }`}
+                  >
+                    <span>{isCredit ? '💳' : '🏦'}</span>
+                    <span>{acc.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Category */}
+          {/* Category — primary field for expense */}
           <div>
-            <label className="mb-1 block text-xs text-[#8795a5]">Категория</label>
+            <label className="mb-1 block text-xs text-[#8795a5]">
+              {type === 'expense' ? 'Категория (конверт)' : 'Категория'}
+            </label>
             {type === 'income' ? (
               <select
                 value={categoryId}
@@ -147,9 +142,7 @@ export default function AddTransactionModal({ onClose, prefilledType = 'expense'
                 {categories
                   .filter((c) => !c.id.startsWith('cc-payment-'))
                   .map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
               </select>
             ) : (
@@ -183,6 +176,30 @@ export default function AddTransactionModal({ onClose, prefilledType = 'expense'
               className="w-full rounded-xl bg-[#171f2a] px-3 py-2 text-sm text-[#eef4f8] outline-none"
             />
           </div>
+
+          {/* Advanced: Date only */}
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl bg-[#171f2a] px-3 py-2 text-xs text-[#8795a5] transition-colors hover:text-[#eef4f8]"
+          >
+            <span>Дата</span>
+            <span className="text-[10px]">
+              {showAdvanced ? '▲' : '▼'}{' '}
+              <span className="opacity-60">{date}</span>
+            </span>
+          </button>
+
+          {showAdvanced && (
+            <div className="rounded-xl bg-[#0d1520] p-3">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full rounded-xl bg-[#171f2a] px-3 py-2 text-sm text-[#eef4f8] outline-none"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2">
