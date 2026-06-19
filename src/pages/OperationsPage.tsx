@@ -18,12 +18,92 @@ export default function OperationsPage({ onTabChange }: Props) {
   const transactions = useStore((s) => s.transactions);
   const categories = useStore((s) => s.categories);
   const categoryGroups = useStore((s) => s.categoryGroups);
+  const bankMappings = useStore((s) => s.bankMappings);
+  const rules = useStore((s) => s.rules);
+  const updateTransactionCategory = useStore((s) => s.updateTransactionCategory);
+  const learnBankMapping = useStore((s) => s.learnBankMapping);
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [onlyUnreviewed, setOnlyUnreviewed] = useState(false);
   const [editTxn, setEditTxn] = useState<Transaction | null>(null);
+
+  const unreviewedTransactions = useMemo(() => {
+    return transactions
+      .filter((t) => !t.isReviewed)
+      .map((t) => {
+        let suggestedCategoryId: string | undefined;
+
+        // 1. Check bank mappings
+        if (t.bankCategory) {
+          const mapping = bankMappings.find((m) => m.bankCategory === t.bankCategory);
+          if (mapping) {
+            suggestedCategoryId = mapping.categoryId;
+          }
+        }
+
+        // 2. Check rules
+        if (!suggestedCategoryId) {
+          const matched = applyRules([t], rules)[0];
+          if (matched && matched.categoryId) {
+            suggestedCategoryId = matched.categoryId;
+          }
+        }
+
+        // 3. Check past transactions with same bankCategory
+        if (!suggestedCategoryId && t.bankCategory) {
+          const past = transactions.filter((pt) => pt.isReviewed && pt.bankCategory === t.bankCategory && pt.categoryId);
+          if (past.length > 0) {
+            const counts: Record<string, number> = {};
+            past.forEach((pt) => {
+              if (pt.categoryId) counts[pt.categoryId] = (counts[pt.categoryId] || 0) + 1;
+            });
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            if (sorted[0]) {
+              suggestedCategoryId = sorted[0][0];
+            }
+          }
+        }
+
+        // 4. Check past transactions with same description
+        if (!suggestedCategoryId) {
+          const past = transactions.filter((pt) => pt.isReviewed && pt.description === t.description && pt.categoryId);
+          if (past.length > 0) {
+            const counts: Record<string, number> = {};
+            past.forEach((pt) => {
+              if (pt.categoryId) counts[pt.categoryId] = (counts[pt.categoryId] || 0) + 1;
+            });
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            if (sorted[0]) {
+              suggestedCategoryId = sorted[0][0];
+            }
+          }
+        }
+
+        return {
+          transactionId: t.id,
+          description: t.description,
+          amount: t.amount,
+          date: t.date,
+          suggestedCategoryId,
+          onApprove: (transactionId: string, categoryId: string) => {
+            updateTransactionCategory(transactionId, categoryId);
+            if (t.bankCategory) {
+              learnBankMapping(t.bankCategory, categoryId);
+            }
+          },
+        };
+      });
+  }, [transactions, bankMappings, rules, updateTransactionCategory, learnBankMapping]);
+
+  const handleApproveAll = () => {
+    unreviewedTransactions.forEach((ut) => {
+      if (ut.suggestedCategoryId) {
+        ut.onApprove(ut.transactionId, ut.suggestedCategoryId);
+      }
+    });
+  };
 
   const filtered = useMemo(() => {
     let result = [...transactions];
@@ -54,7 +134,10 @@ export default function OperationsPage({ onTabChange }: Props) {
       <h2 className="mb-4 text-lg font-bold tracking-[-0.02em] text-[#eef4f8]">Операции</h2>
 
       <div className="mb-[14px]">
-        <ReviewQueue />
+        <ReviewQueue
+          unreviewedTransactions={unreviewedTransactions}
+          onApproveAll={handleApproveAll}
+        />
       </div>
 
       <section className="mb-[14px] rounded-[18px] bg-[#121821] p-[18px]">

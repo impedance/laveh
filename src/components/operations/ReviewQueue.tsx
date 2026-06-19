@@ -1,51 +1,110 @@
-import { useState } from 'react';
 import { useStore } from '../../store';
-import EditCategoryModal from './EditCategoryModal';
-import type { Transaction } from '../../store/types';
 import { formatDateShort } from '../../shared/formatDate';
 
-export default function ReviewQueue() {
-  const transactions = useStore((s) => s.transactions);
-  const uncategorized = transactions.filter((t) => !t.isReviewed);
-  const [editTxn, setEditTxn] = useState<Transaction | null>(null);
+export interface ReviewTransactionProps {
+  transactionId: string;
+  description: string;
+  amount: number;
+  date: string;
+  suggestedCategoryId?: string;
+  onApprove: (transactionId: string, categoryId: string) => void;
+}
 
-  if (uncategorized.length === 0) return null;
+export interface ReviewQueueProps {
+  unreviewedTransactions: ReviewTransactionProps[];
+  onApproveAll: () => void;
+}
 
-  const current = uncategorized[0];
+export default function ReviewQueue({
+  unreviewedTransactions,
+  onApproveAll,
+}: ReviewQueueProps) {
+  const categories = useStore((s) => s.categories);
+  const categoryGroups = useStore((s) => s.categoryGroups);
 
-  if (editTxn) {
-    return <EditCategoryModal transaction={editTxn} onClose={() => setEditTxn(null)} />;
-  }
+  if (unreviewedTransactions.length === 0) return null;
+
+  const hasSuggestions = unreviewedTransactions.some((t) => t.suggestedCategoryId);
 
   return (
     <section className="rounded-[18px] border-t-2 border-t-[#f5a623] bg-[#121821] p-[18px]">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-bold text-[#eef4f8]">
-          {uncategorized.length} операций без категории
+          {unreviewedTransactions.length} операций без категории
         </h3>
-        <span className="text-xs text-[#8795a5]">
-          {uncategorized.length} шт.
-        </span>
-      </div>
-      {current && (
-        <div className="mb-4 rounded-xl bg-[#171f2a] p-4">
-          <div className="mb-2 flex items-start justify-between">
-            <div>
-              <div className="text-sm font-medium text-[#eef4f8]">{current.description}</div>
-              <div className="mt-0.5 text-xs text-[#8795a5]">{formatDateShort(current.date)}</div>
-            </div>
-            <span className={`text-sm font-bold ${current.amount >= 0 ? 'text-[#58d68d]' : 'text-[#e74c3c]'}`}>
-              {current.amount.toLocaleString('ru-RU')} ₽
-            </span>
-          </div>
+        {hasSuggestions && (
           <button
-            onClick={() => setEditTxn(current)}
-            className="w-full rounded-xl bg-[#75b8ff] px-4 py-2.5 text-sm font-bold text-[#090d12] transition-opacity hover:opacity-90"
+            onClick={onApproveAll}
+            className="rounded-xl bg-[#75b8ff]/10 border border-[#75b8ff]/20 px-3 py-1.5 text-xs font-bold text-[#75b8ff] hover:bg-[#75b8ff]/20 transition-colors"
           >
-            Назначить категорию
+            Одобрить все
           </button>
-        </div>
-      )}
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {unreviewedTransactions.map((item) => {
+          const suggestedCat = item.suggestedCategoryId
+            ? categories.find((c) => c.id === item.suggestedCategoryId)
+            : undefined;
+
+          return (
+            <div
+              key={item.transactionId}
+              className="rounded-xl bg-[#171f2a] p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-[#eef4f8]">{item.description}</div>
+                <div className="mt-0.5 text-xs text-[#8795a5]">{formatDateShort(item.date)}</div>
+              </div>
+
+              <div className="flex items-center justify-between sm:justify-end gap-3">
+                <span className={`text-sm font-bold ${item.amount >= 0 ? 'text-[#58d68d]' : 'text-[#e74c3c]'}`}>
+                  {item.amount.toLocaleString('ru-RU')} ₽
+                </span>
+
+                <div className="flex items-center gap-2">
+                  {suggestedCat && (
+                    <button
+                      onClick={() => item.onApprove(item.transactionId, suggestedCat.id)}
+                      className="rounded-xl bg-[#58d68d] px-3 py-1.5 text-xs font-bold text-[#090d12] hover:opacity-90 transition-opacity"
+                      title={`Назначить категорию: ${suggestedCat.name}`}
+                    >
+                      ✓ {suggestedCat.name}
+                    </button>
+                  )}
+
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        item.onApprove(item.transactionId, e.target.value);
+                      }
+                    }}
+                    className="rounded-xl bg-[#121821] border border-[rgba(255,255,255,0.08)] px-3 py-1.5 text-xs text-[#eef4f8] focus:border-[#75b8ff] focus:outline-none"
+                  >
+                    <option value="">Выбрать...</option>
+                    {[...categoryGroups]
+                      .sort((a, b) => a.sortOrder - b.sortOrder)
+                      .map((group) => (
+                        <optgroup key={group.id} label={group.name}>
+                          {categories
+                            .filter((c) => c.groupId === group.id)
+                            .sort((a, b) => a.sortOrder - b.sortOrder)
+                            .map((cat) => (
+                              <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </option>
+                            ))}
+                        </optgroup>
+                      ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

@@ -87,6 +87,7 @@ export interface MonthState {
   categoryAssignments: Record<string, number>;
   categoryCarryover: Record<string, number>;
   toBeBudgeted: number;
+  categoryTargets?: Record<string, number>; // Target needed for this month
 }
 
 export interface StoreState {
@@ -114,6 +115,7 @@ export interface StoreActions {
   commitImport: (transactions: Omit<Transaction, 'id'>[], batch: Omit<ImportBatch, 'id'>) => void;
   undoImport: (batchId: string) => void;
   updateTransactionCategory: (id: string, categoryId: string) => void;
+  markTransactionReviewed: (id: string) => void;
   addRule: (rule: Omit<CategorizationRule, 'id'>) => void;
   toggleRuleActive: (id: string, active: boolean) => void;
   upsertCategory: (category: Omit<Category, 'id' | 'sortOrder'> & { id?: string }) => void;
@@ -131,6 +133,8 @@ export interface StoreActions {
   addIncomeToTBB: (amount: number, month: string) => void;
   ensureCurrentMonthState: () => void;
   coverOverspending: (month: string, sourceCategoryId: string, targetCategoryId: string, amount: number) => void;
+  reconcileAccount: (accountId: string, actualBalance: number) => void;
+  setCategoryTarget: (month: string, categoryId: string, amount: number) => void;
 }
 
 export type DenezhkaStore = StoreState & StoreActions;

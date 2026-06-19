@@ -297,6 +297,14 @@ export const useStore = create<DenezhkaStore>()(
           ),
         });
       },
+      
+      markTransactionReviewed: (id: string) => {
+        set({
+          transactions: get().transactions.map((t) =>
+            t.id === id ? { ...t, isReviewed: true } : t,
+          ),
+        });
+      },
 
       learnBankMapping: (bankCategory: string, categoryId: string) => {
         const existing = get().bankMappings.find((m) => m.bankCategory === bankCategory);
@@ -512,6 +520,63 @@ export const useStore = create<DenezhkaStore>()(
             };
           }),
         });
+      },
+
+      reconcileAccount: (accountId: string, actualBalance: number) => {
+        const account = get().accounts.find((a) => a.id === accountId);
+        if (!account) return;
+        const delta = actualBalance - account.currentBalance;
+        if (delta !== 0) {
+          const transaction: Transaction = {
+            id: generateId(),
+            date: new Date().toISOString().slice(0, 10),
+            description: 'Reconciliation Adjustment',
+            amount: delta,
+            accountId,
+            isReviewed: true,
+          };
+          set({
+            accounts: get().accounts.map((a) =>
+              a.id === accountId ? { ...a, currentBalance: actualBalance } : a
+            ),
+            transactions: [...get().transactions, transaction],
+          });
+        }
+      },
+
+      setCategoryTarget: (month: string, categoryId: string, amount: number) => {
+        const monthStates = get().monthStates;
+        const hasMonthState = monthStates.some((ms) => ms.month === month);
+        if (hasMonthState) {
+          set({
+            monthStates: monthStates.map((ms) =>
+              ms.month === month
+                ? {
+                    ...ms,
+                    categoryTargets: {
+                      ...(ms.categoryTargets ?? {}),
+                      [categoryId]: amount,
+                    },
+                  }
+                : ms
+            ),
+          });
+        } else {
+          set({
+            monthStates: [
+              ...monthStates,
+              {
+                month,
+                categoryAssignments: {},
+                categoryCarryover: {},
+                toBeBudgeted: 0,
+                categoryTargets: {
+                  [categoryId]: amount,
+                },
+              },
+            ],
+          });
+        }
       },
 
       restoreFromJSON: (json: string) => {

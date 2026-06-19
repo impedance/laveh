@@ -4,7 +4,7 @@ import type { Account } from '../store/types';
 import AppLayout from '../components/layout/AppLayout';
 import BottomNavigation from '../components/layout/BottomNavigation';
 import AccountsSummaryCard from '../components/cards/AccountsSummaryCard';
-import EditBalanceModal from '../components/operations/EditBalanceModal';
+import ReconcileModal from '../components/accounts/ReconcileModal';
 
 interface Props {
   onTabChange: (tab: string) => void;
@@ -37,7 +37,7 @@ const GROUP_LABELS: Record<'cash' | 'card' | 'savings' | 'debt', string> = {
 
 export default function AccountsPage({ onTabChange }: Props) {
   const store = useStore();
-  const [showEditBalance, setShowEditBalance] = useState(false);
+  const [reconcileAcc, setReconcileAcc] = useState<Account | null>(null);
 
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountType, setNewAccountType] = useState<'debit' | 'credit'>('debit');
@@ -101,7 +101,7 @@ export default function AccountsPage({ onTabChange }: Props) {
       <div className="mb-[14px] flex items-center justify-between">
         <h2 className="text-lg font-bold tracking-[-0.02em] text-[#eef4f8]">Счета и Капитал</h2>
         <button
-          onClick={() => setShowEditBalance(true)}
+          onClick={() => store.accounts.length > 0 && setReconcileAcc(store.accounts[0])}
           className="rounded-xl bg-[#171f2a] px-3 py-1.5 text-sm font-semibold text-[#75b8ff] hover:bg-[#1e2a3a] transition-colors"
         >
           Сверить баланс
@@ -138,6 +138,12 @@ export default function AccountsPage({ onTabChange }: Props) {
                         <span className="text-[10px] rounded-full bg-[#121821] px-2 py-0.5 text-[#8795a5]">
                           {acc.type === 'credit' ? 'Кредит' : 'Дебет'}
                         </span>
+                        <button
+                          onClick={() => setReconcileAcc(acc)}
+                          className="text-xs text-[#75b8ff] hover:opacity-85 mr-1"
+                        >
+                          Сверить
+                        </button>
                         <button
                           onClick={() => {
                             if (window.confirm(`Удалить счёт «${acc.name}»? Транзакции будут удалены.`)) {
@@ -245,9 +251,16 @@ export default function AccountsPage({ onTabChange }: Props) {
       </div>
 
       {/* Reconcile modal overlay */}
-      {showEditBalance && (
-        <EditBalanceModal
-          onClose={() => setShowEditBalance(false)}
+      {reconcileAcc && (
+        <ReconcileModal
+          accountId={reconcileAcc.id}
+          accountName={reconcileAcc.name}
+          calculatedBalance={reconcileAcc.currentBalance}
+          onConfirm={(actualBalance) => {
+            store.reconcileAccount(reconcileAcc.id, actualBalance);
+            setReconcileAcc(null);
+          }}
+          onClose={() => setReconcileAcc(null)}
         />
       )}
     </AppLayout>
